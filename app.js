@@ -679,8 +679,15 @@ async function loadDailyChecklist() {
             const isChecked = checkData.records.find(r => r.point_id === point.id)?.completed || false;
             return `
                 <div class="check-item">
-                    <input type="checkbox" id="point-${point.id}" ${isChecked ? 'checked' : ''}
-                           onchange="updateDailyCheck(${point.id}, this.checked)">
+                    <input type="range"
+                    min="0"
+                    max="100"
+                    value="${percentageValue}"
+                    class="slider"
+                    id="point-${point.id}"
+                    oninput="updateDailyCheck(${point.id}, this.value)">
+                <span id="percent-${point.id}" class="percent-label">${percentageValue}%</span>
+
                     <label for="point-${point.id}">${escapeHtml(point.text)}</label>
                 </div>
             `;
