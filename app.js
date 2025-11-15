@@ -712,7 +712,7 @@ async function updateDailyCheck(pointId, completed) {
         await fetch(`${API_URL}/api/members/${currentUser.id}/daily`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ date: today, pointId, completed })
+            body: JSON.stringify({ date: today, pointId, completed: Number(completed) })
         });
     } catch (error) {
         console.error('Error updating check:', error);
