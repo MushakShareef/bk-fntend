@@ -697,6 +697,11 @@ async function loadDailyChecklist() {
         showError('memberLoginError', 'Failed to load daily checklist.');
     }
 }
+function updateSliderValue(slider, pointId) {
+    const value = slider.value;
+    document.getElementById(`slider-value-${pointId}`).textContent = value + '%';
+}
+
 
 // Update Daily Check
 async function updateDailyCheck(pointId, completed) {
