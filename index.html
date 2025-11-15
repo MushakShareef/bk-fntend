@@ -7,15 +7,18 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+
     <!-- Landing Page -->
     <div id="landingPage" class="page active">
         <div class="container">
             <div class="logo-container">
-                <div class="logo">🕉️</div>
+                <div class="logo">
+                    <img src="/baba.png" alt="baba">
+                </div>
             </div>
             <h1 class="om-shanthi">Om Shanthi</h1>
             <h2 class="app-title">Spiritual Chart for BK Students Trichy</h2>
-            
+
             <div class="button-group">
                 <button class="btn btn-primary" onclick="showAdminLogin()">Admin Login</button>
                 <button class="btn btn-secondary" onclick="showMemberLogin()">Member Login</button>
@@ -29,6 +32,7 @@
         <div class="container">
             <button class="btn-back" onclick="showLanding()">← Back</button>
             <h2 class="page-title">Admin Login</h2>
+
             <form id="adminLoginForm" class="form">
                 <div class="form-group">
                     <label>Username</label>
@@ -40,6 +44,7 @@
                 </div>
                 <button type="submit" class="btn btn-primary">Login</button>
                 <div id="adminLoginError" class="error-message"></div>
+
                 <div class="forgot-password">
                     <a href="#" onclick="showAdminForgotPassword(event)">Forgot Password?</a>
                 </div>
@@ -52,12 +57,14 @@
         <div class="container">
             <button class="btn-back" onclick="showAdminLogin()">← Back</button>
             <h2 class="page-title">Admin Password Reset</h2>
+
             <form id="adminForgotPasswordForm" class="form">
                 <div class="form-group">
                     <label>Username</label>
                     <input type="text" id="adminForgotUsername" required>
                 </div>
                 <button type="submit" class="btn btn-primary">Send Reset Code</button>
+
                 <div id="adminForgotError" class="error-message"></div>
                 <div id="adminForgotSuccess" class="success-message"></div>
             </form>
@@ -69,9 +76,10 @@
         <div class="container">
             <button class="btn-back" onclick="showAdminLogin()">← Back</button>
             <h2 class="page-title">Enter Reset Code</h2>
+
             <form id="adminResetPasswordForm" class="form">
                 <div class="form-group">
-                    <label>Reset Code (Check your email)</label>
+                    <label>Reset Code</label>
                     <input type="text" id="adminResetCode" required placeholder="6-digit code">
                 </div>
                 <div class="form-group">
@@ -82,7 +90,9 @@
                     <label>Confirm New Password</label>
                     <input type="password" id="adminConfirmNewPassword" required>
                 </div>
+
                 <button type="submit" class="btn btn-primary">Reset Password</button>
+
                 <div id="adminResetError" class="error-message"></div>
                 <div id="adminResetSuccess" class="success-message"></div>
             </form>
@@ -94,6 +104,7 @@
         <div class="container">
             <button class="btn-back" onclick="showLanding()">← Back</button>
             <h2 class="page-title">Member Login</h2>
+
             <form id="memberLoginForm" class="form">
                 <div class="form-group">
                     <label>Mobile Number</label>
@@ -103,8 +114,11 @@
                     <label>Password</label>
                     <input type="password" id="memberPassword" required>
                 </div>
+
                 <button type="submit" class="btn btn-primary">Login</button>
+
                 <div id="memberLoginError" class="error-message"></div>
+
                 <div class="forgot-password">
                     <a href="#" onclick="showMemberForgotPassword(event)">Forgot Password?</a>
                 </div>
@@ -117,12 +131,14 @@
         <div class="container">
             <button class="btn-back" onclick="showMemberLogin()">← Back</button>
             <h2 class="page-title">Member Password Reset</h2>
+
             <form id="memberForgotPasswordForm" class="form">
                 <div class="form-group">
                     <label>Mobile Number</label>
                     <input type="tel" id="memberForgotMobile" required>
                 </div>
                 <button type="submit" class="btn btn-primary">Send Reset Code</button>
+
                 <div id="memberForgotError" class="error-message"></div>
                 <div id="memberForgotSuccess" class="success-message"></div>
             </form>
@@ -134,9 +150,10 @@
         <div class="container">
             <button class="btn-back" onclick="showMemberLogin()">← Back</button>
             <h2 class="page-title">Enter Reset Code</h2>
+
             <form id="memberResetPasswordForm" class="form">
                 <div class="form-group">
-                    <label>Reset Code (Check your email)</label>
+                    <label>Reset Code</label>
                     <input type="text" id="memberResetCode" required placeholder="6-digit code">
                 </div>
                 <div class="form-group">
@@ -147,7 +164,9 @@
                     <label>Confirm New Password</label>
                     <input type="password" id="memberConfirmNewPassword" required>
                 </div>
+
                 <button type="submit" class="btn btn-primary">Reset Password</button>
+
                 <div id="memberResetError" class="error-message"></div>
                 <div id="memberResetSuccess" class="success-message"></div>
             </form>
@@ -159,6 +178,7 @@
         <div class="container">
             <button class="btn-back" onclick="showLanding()">← Back</button>
             <h2 class="page-title">Member Registration</h2>
+
             <form id="registerForm" class="form">
                 <div class="form-group">
                     <label>Name</label>
@@ -180,7 +200,9 @@
                     <label>Confirm Password</label>
                     <input type="password" id="regConfirmPassword" required>
                 </div>
+
                 <button type="submit" class="btn btn-primary">Register</button>
+
                 <div id="registerError" class="error-message"></div>
                 <div id="registerSuccess" class="success-message"></div>
             </form>
@@ -193,34 +215,34 @@
             <h2>Admin Dashboard</h2>
             <button class="btn btn-logout" onclick="logout()">Logout</button>
         </div>
+
         <div class="container">
             <div class="tabs">
-                <button class="tab-btn active" onclick="showAdminTab('members')">All Members</button>
-                <button class="tab-btn" onclick="showAdminTab('points')">Manage Points</button>
-                <button class="tab-btn" onclick="showAdminTab('charts')">View Charts</button>
+                <button class="tab-btn active" data-tab="members" onclick="showAdminTab(event, 'members')">All Members</button>
+                <button class="tab-btn" data-tab="points" onclick="showAdminTab(event, 'points')">Manage Points</button>
+                <button class="tab-btn" data-tab="charts" onclick="showAdminTab(event, 'charts')">View Charts</button>
             </div>
 
-            <!-- All Members Tab -->
             <div id="membersTab" class="tab-content active">
                 <div id="membersList"></div>
             </div>
 
-            <!-- Manage Points Tab -->
             <div id="pointsTab" class="tab-content">
                 <button class="btn btn-primary mb-20" onclick="showAddPointForm()">+ Add New Point</button>
+
                 <div id="addPointForm" class="form hidden">
                     <h3>Add New Point</h3>
                     <div class="form-group">
                         <label>Point Text (Tamil)</label>
                         <textarea id="newPointText" required></textarea>
                     </div>
-                    <button class="btn btn-primary" onclick="addPoint()">Add Point</button>
+                    <button class="btn btn-primary" onclick="addPoint()">Add</button>
                     <button class="btn btn-secondary" onclick="hideAddPointForm()">Cancel</button>
                 </div>
+
                 <div id="pointsList"></div>
             </div>
 
-            <!-- View Charts Tab -->
             <div id="chartsTab" class="tab-content">
                 <div id="adminChartsList"></div>
             </div>
@@ -233,32 +255,30 @@
             <h2 id="memberName">Welcome</h2>
             <button class="btn btn-logout" onclick="logout()">Logout</button>
         </div>
+
         <div class="container">
             <div class="tabs">
-                <button class="tab-btn active" onclick="showMemberTab('daily')">Daily Check</button>
-                <button class="tab-btn" onclick="showMemberTab('progress')">My Progress</button>
-                <button class="tab-btn" onclick="showMemberTab('allcharts')">View All Charts</button>
+                <button class="tab-btn active" data-tab="daily" onclick="showMemberTab(event, 'daily')">Daily Check</button>
+                <button class="tab-btn" data-tab="progress" onclick="showMemberTab(event, 'progress')">My Progress</button>
+                <button class="tab-btn" data-tab="allcharts" onclick="showMemberTab(event, 'allcharts')">View All Charts</button>
             </div>
 
-            <!-- Daily Check Tab -->
             <div id="dailyTab" class="tab-content active">
                 <div class="date-display">Today: <span id="todayDate"></span></div>
                 <div id="dailyCheckList"></div>
             </div>
 
-            <!-- My Progress Tab -->
             <div id="progressTab" class="tab-content">
                 <div class="period-selector">
-                    <button class="period-btn active" onclick="showPeriod('daily')">Daily</button>
-                    <button class="period-btn" onclick="showPeriod('weekly')">Weekly</button>
-                    <button class="period-btn" onclick="showPeriod('monthly')">Monthly</button>
-                    <button class="period-btn" onclick="showPeriod('yearly')">Yearly</button>
+                    <button class="period-btn active" onclick="showPeriod('daily', event)">Daily</button>
+                    <button class="period-btn" onclick="showPeriod('weekly', event)">Weekly</button>
+                    <button class="period-btn" onclick="showPeriod('monthly', event)">Monthly</button>
+                    <button class="period-btn" onclick="showPeriod('yearly', event)">Yearly</button>
                 </div>
                 <div id="progressCharts"></div>
             </div>
 
-            <!-- View All Charts Tab -->
-            <div id="allChartsTab" class="tab-content">
+            <div id="allchartsTab" class="tab-content">
                 <div id="allMembersList"></div>
             </div>
         </div>
@@ -269,12 +289,14 @@
         <div class="modal-content">
             <button class="modal-close" onclick="closeChartModal()">×</button>
             <h3 id="chartMemberName"></h3>
+
             <div class="period-selector">
-                <button class="period-btn active" onclick="showModalPeriod('daily')">Daily</button>
-                <button class="period-btn" onclick="showModalPeriod('weekly')">Weekly</button>
-                <button class="period-btn" onclick="showModalPeriod('monthly')">Monthly</button>
-                <button class="period-btn" onclick="showModalPeriod('yearly')">Yearly</button>
+                <button class="period-btn active" onclick="showModalPeriod('daily', event)">Daily</button>
+                <button class="period-btn" onclick="showModalPeriod('weekly', event)">Weekly</button>
+                <button class="period-btn" onclick="showModalPeriod('monthly', event)">Monthly</button>
+                <button class="period-btn" onclick="showModalPeriod('yearly', event)">Yearly</button>
             </div>
+
             <div id="modalCharts"></div>
         </div>
     </div>

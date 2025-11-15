@@ -1,5 +1,9 @@
+// ==========================================================
+//                  BK APP – CLEAN & IMPROVED app.js
+// ==========================================================
+
 // API Configuration
-const API_URL = 'https://bk-spiritual-backend.onrender.com'; // Replace with your Render backend URL
+const API_URL = 'https://bk-spiritual-backend.onrender.com';
 
 // Global State
 let currentUser = null;
@@ -18,29 +22,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Setup Event Listeners
 function setupEventListeners() {
-    // Admin Login Form
     document.getElementById('adminLoginForm').addEventListener('submit', handleAdminLogin);
-    
-    // Member Login Form
     document.getElementById('memberLoginForm').addEventListener('submit', handleMemberLogin);
-    
-    // Register Form
     document.getElementById('registerForm').addEventListener('submit', handleRegister);
-    
-    // Admin Forgot Password Form
+
     document.getElementById('adminForgotPasswordForm').addEventListener('submit', handleAdminForgotPassword);
-    
-    // Admin Reset Password Form
     document.getElementById('adminResetPasswordForm').addEventListener('submit', handleAdminResetPassword);
-    
-    // Member Forgot Password Form
+
     document.getElementById('memberForgotPasswordForm').addEventListener('submit', handleMemberForgotPassword);
-    
-    // Member Reset Password Form
     document.getElementById('memberResetPasswordForm').addEventListener('submit', handleMemberResetPassword);
 }
 
-// Page Navigation
+// ==========================================================
+//                       PAGE NAVIGATION
+// ==========================================================
+
 function showLanding() {
     hideAllPages();
     document.getElementById('landingPage').classList.add('active');
@@ -61,645 +57,582 @@ function showRegister() {
     document.getElementById('registerPage').classList.add('active');
 }
 
-function showAdminForgotPassword(e) {
-    e.preventDefault();
-    hideAllPages();
-    document.getElementById('adminForgotPasswordPage').classList.add('active');
-}
-
-function showMemberForgotPassword(e) {
-    e.preventDefault();
-    hideAllPages();
-    document.getElementById('memberForgotPasswordPage').classList.add('active');
-}
-
 function hideAllPages() {
-    document.querySelectorAll('.page').forEach(page => {
-        page.classList.remove('active');
-    });
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
 }
 
-// Authentication Check
+// ==========================================================
+//                     AUTH CHECK
+// ==========================================================
+
 function checkAuth() {
-    const user = localStorage.getItem('currentUser');
-    if (user) {
-        currentUser = JSON.parse(user);
-        if (currentUser.role === 'admin') {
-            showAdminDashboard();
-        } else {
-            showMemberDashboard();
-        }
+    const saved = localStorage.getItem('currentUser');
+    if (saved) {
+        currentUser = JSON.parse(saved);
+        if (currentUser.role === 'admin') showAdminDashboard();
+        else showMemberDashboard();
     }
 }
 
-// Admin Login Handler
+// ==========================================================
+//                 ADMIN LOGIN
+// ==========================================================
+
 async function handleAdminLogin(e) {
     e.preventDefault();
-    const username = document.getElementById('adminUsername').value;
-    const password = document.getElementById('adminPassword').value;
-    
+    const username = adminUsername.value;
+    const password = adminPassword.value;
+
     try {
-        const response = await fetch(`${API_URL}/api/admin/login`, {
+        const res = await fetch(`${API_URL}/api/admin/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password })
         });
-        
-        const data = await response.json();
-        
-        if (response.ok) {
+
+        const data = await res.json();
+
+        if (res.ok) {
             currentUser = { ...data.admin, role: 'admin' };
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
             showAdminDashboard();
         } else {
-            showError('adminLoginError', data.message || 'Invalid credentials');
+            showError('adminLoginError', data.message || 'Invalid Login');
         }
-    } catch (error) {
-        showError('adminLoginError', 'Connection error. Please try again.');
+    } catch {
+        showError('adminLoginError', 'Connection issue. Try again.');
     }
 }
 
-// Member Login Handler
+// ==========================================================
+//                 MEMBER LOGIN
+// ==========================================================
+
 async function handleMemberLogin(e) {
     e.preventDefault();
-    const mobile = document.getElementById('memberMobile').value;
-    const password = document.getElementById('memberPassword').value;
-    
+    const mobile = memberMobile.value;
+    const password = memberPassword.value;
+
     try {
-        const response = await fetch(`${API_URL}/api/members/login`, {
+        const res = await fetch(`${API_URL}/api/members/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ mobile, password })
         });
-        
-        const data = await response.json();
-        
-        if (response.ok) {
+
+        const data = await res.json();
+
+        if (res.ok) {
             currentUser = { ...data.member, role: 'member' };
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
             showMemberDashboard();
         } else {
-            showError('memberLoginError', data.message || 'Invalid credentials');
+            showError('memberLoginError', data.message || 'Invalid Login');
         }
-    } catch (error) {
-        showError('memberLoginError', 'Connection error. Please try again.');
+    } catch {
+        showError('memberLoginError', 'Connection issue. Try again.');
     }
 }
 
-// Register Handler
+// ==========================================================
+//                     REGISTER
+// ==========================================================
+
 async function handleRegister(e) {
     e.preventDefault();
-    
-    const name = document.getElementById('regName').value;
-    const centre = document.getElementById('regCentre').value;
-    const mobile = document.getElementById('regMobile').value;
-    const password = document.getElementById('regPassword').value;
-    const confirmPassword = document.getElementById('regConfirmPassword').value;
-    
-    if (password !== confirmPassword) {
-        showError('registerError', 'Passwords do not match');
-        return;
-    }
-    
+
+    const name = regName.value;
+    const centre = regCentre.value;
+    const mobile = regMobile.value;
+    const password = regPassword.value;
+    const confirmPassword = regConfirmPassword.value;
+
+    if (password !== confirmPassword) return showError('registerError', 'Passwords do not match');
+
     try {
-        const response = await fetch(`${API_URL}/api/members/register`, {
+        const res = await fetch(`${API_URL}/api/members/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name, centre, mobile, password })
         });
-        
-        const data = await response.json();
-        
-        if (response.ok) {
-            document.getElementById('registerForm').reset();
-            showSuccess('registerSuccess', 'Registration successful! You can now login.');
-            setTimeout(() => showMemberLogin(), 3000);
+
+        const data = await res.json();
+
+        if (res.ok) {
+            showSuccess('registerSuccess', 'Registration successful!');
+            registerForm.reset();
+            setTimeout(showMemberLogin, 2000);
         } else {
-            showError('registerError', data.message || 'Registration failed');
+            showError('registerError', data.message);
         }
-    } catch (error) {
-        showError('registerError', 'Connection error. Please try again.');
+    } catch {
+        showError('registerError', 'Connection issue. Try again.');
     }
 }
 
-// Show Admin Dashboard
-async function showAdminDashboard() {
+// ==========================================================
+//                   ADMIN DASHBOARD
+// ==========================================================
+
+function showAdminDashboard() {
     hideAllPages();
-    document.getElementById('adminDashboard').classList.add('active');
-    showAdminTab('members');
-    await loadAllMembers();
+    adminDashboard.classList.add('active');
+
+    // FIX ⭐ Auto select "Members" tab safely
+    setTimeout(() => showAdminTab(null, 'members'), 10);
 }
 
-// Show Admin Tabs
-async function showAdminTab(tab) {
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-    
-    event.target.classList.add('active');
+// ⭐ FINAL FIXED VERSION — SAFEST POSSIBLE
+async function showAdminTab(event, tab) {
+
+    // Remove active classes
+    document.querySelectorAll('#adminDashboard .tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#adminDashboard .tab-content').forEach(c => c.classList.remove('active'));
+
+    // Activate correct button
+    const btn = event?.target || document.querySelector(`#adminDashboard .tab-btn[data-tab="${tab}"]`);
+    if (btn) btn.classList.add('active');
+
+    // Show tab content
     document.getElementById(`${tab}Tab`).classList.add('active');
-    
-    if (tab === 'members') {
-        await loadAllMembers();
-    } else if (tab === 'points') {
-        await loadPoints();
-    } else if (tab === 'charts') {
-        await loadAdminCharts();
-    }
+
+    if (tab === 'members') loadAllMembers();
+    if (tab === 'points') loadPoints();
+    if (tab === 'charts') loadAdminCharts();
 }
 
-// Load All Members
+// ==========================================================
+//                 LOAD MEMBERS (ADMIN)
+// ==========================================================
+
 async function loadAllMembers() {
     try {
-        const response = await fetch(`${API_URL}/api/admin/all-members`, {
+        const res = await fetch(`${API_URL}/api/admin/all-members`, {
             headers: { 'Authorization': `Bearer ${currentUser.id}` }
         });
-        const data = await response.json();
-        
-        const container = document.getElementById('membersList');
-        
-        if (data.members.length === 0) {
-            container.innerHTML = '<div class="empty-state">No members yet</div>';
-            return;
-        }
-        
-        container.innerHTML = data.members.map(member => `
-            <div class="member-card">
-                <h4>${member.name}</h4>
-                <p>BK Centre: ${member.centre}</p>
-                <p>Mobile: ${member.mobile}</p>
-                <p>Registered: ${new Date(member.created_at).toLocaleDateString('en-IN')}</p>
-                <div class="card-actions">
-                    <button class="btn-danger" onclick="deleteMember(${member.id})">Delete Member</button>
+
+        const data = await res.json();
+
+        membersList.innerHTML = data.members.length
+            ? data.members.map(m => `
+                <div class="member-card">
+                    <h4>${m.name}</h4>
+                    <p>Centre: ${m.centre}</p>
+                    <p>Mobile: ${m.mobile}</p>
+                    <button class="btn-danger" onclick="deleteMember(${m.id})">Delete</button>
                 </div>
-            </div>
-        `).join('');
-    } catch (error) {
-        console.error('Error loading members:', error);
+              `).join('')
+            : '<div class="empty-state">No members yet</div>';
+
+    } catch (err) {
+        console.log('Members error', err);
     }
 }
 
-// Delete Member
-async function deleteMember(memberId) {
-    if (!confirm('Are you sure you want to delete this member? All their data will be permanently removed.')) return;
-    
-    try {
-        const response = await fetch(`${API_URL}/api/admin/delete-member/${memberId}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${currentUser.id}` }
-        });
-        
-        if (response.ok) {
-            await loadAllMembers();
-        }
-    } catch (error) {
-        console.error('Error deleting member:', error);
-    }
+async function deleteMember(id) {
+    if (!confirm('Delete member permanently?')) return;
+
+    await fetch(`${API_URL}/api/admin/delete-member/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${currentUser.id}` }
+    });
+
+    loadAllMembers();
 }
 
-// Load Points
+// ==========================================================
+//                    LOAD POINTS
+// ==========================================================
+
 async function loadPoints() {
     try {
-        const response = await fetch(`${API_URL}/api/points`);
-        const data = await response.json();
+        const res = await fetch(`${API_URL}/api/points`);
+        const data = await res.json();
         allPoints = data.points;
-        
-        const container = document.getElementById('pointsList');
-        container.innerHTML = allPoints.map((point, index) => `
+
+        pointsList.innerHTML = allPoints.map((p, i) => `
             <div class="point-card">
-                <h4>Point ${index + 1}</h4>
-                <p>${point.text}</p>
-                <div class="card-actions">
-                    <button class="btn-secondary btn-small" onclick="editPoint(${point.id}, '${point.text.replace(/'/g, "\\'")}')">Edit</button>
-                    <button class="btn-danger btn-small" onclick="deletePoint(${point.id})">Delete</button>
-                </div>
+                <h4>Point ${i + 1}</h4>
+                <p>${p.text}</p>
+                <button onclick="editPoint(${p.id}, '${p.text.replace(/'/g, "\\'")}')" class="btn-secondary">Edit</button>
+                <button onclick="deletePoint(${p.id})" class="btn-danger">Delete</button>
             </div>
         `).join('');
-    } catch (error) {
-        console.error('Error loading points:', error);
+
+    } catch (err) {
+        console.log('Points error', err);
     }
 }
 
-// Show Add Point Form
-function showAddPointForm() {
-    document.getElementById('addPointForm').classList.remove('hidden');
-}
-
-function hideAddPointForm() {
-    document.getElementById('addPointForm').classList.add('hidden');
-    document.getElementById('newPointText').value = '';
-}
-
-// Add Point
 async function addPoint() {
-    const text = document.getElementById('newPointText').value.trim();
+    const text = newPointText.value.trim();
     if (!text) return;
-    
-    try {
-        const response = await fetch(`${API_URL}/api/admin/points`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${currentUser.id}`
-            },
-            body: JSON.stringify({ text })
-        });
-        
-        if (response.ok) {
-            hideAddPointForm();
-            await loadPoints();
-        }
-    } catch (error) {
-        console.error('Error adding point:', error);
-    }
+
+    await fetch(`${API_URL}/api/admin/points`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentUser.id}`
+        },
+        body: JSON.stringify({ text })
+    });
+
+    hideAddPointForm();
+    loadPoints();
 }
 
-// Edit Point
-async function editPoint(pointId, currentText) {
-    const newText = prompt('Edit point text:', currentText);
-    if (!newText || newText === currentText) return;
-    
-    try {
-        const response = await fetch(`${API_URL}/api/admin/points/${pointId}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${currentUser.id}`
-            },
-            body: JSON.stringify({ text: newText })
-        });
-        
-        if (response.ok) {
-            await loadPoints();
-        }
-    } catch (error) {
-        console.error('Error editing point:', error);
-    }
+async function editPoint(id, oldText) {
+    const newText = prompt('Edit point:', oldText);
+    if (!newText) return;
+
+    await fetch(`${API_URL}/api/admin/points/${id}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentUser.id}`
+        },
+        body: JSON.stringify({ text: newText })
+    });
+
+    loadPoints();
 }
 
-// Delete Point
-async function deletePoint(pointId) {
-    if (!confirm('Are you sure you want to delete this point?')) return;
-    
-    try {
-        const response = await fetch(`${API_URL}/api/admin/points/${pointId}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${currentUser.id}` }
-        });
-        
-        if (response.ok) {
-            await loadPoints();
+async function deletePoint(id) {
+    if (!confirm('Delete this point?')) return;
+
+    await fetch(`${API_URL}/api/admin/points/${id}`, {
+        method: 'DELETE',
+        headers: {
+            'Authorization': `Bearer ${currentUser.id}`
         }
-    } catch (error) {
-        console.error('Error deleting point:', error);
-    }
+    });
+
+    loadPoints();
 }
 
-// Load Admin Charts
+// ==========================================================
+//                     ADMIN CHARTS
+// ==========================================================
+
 async function loadAdminCharts() {
     try {
-        const response = await fetch(`${API_URL}/api/admin/all-members`, {
+        const res = await fetch(`${API_URL}/api/admin/all-members`, {
             headers: { 'Authorization': `Bearer ${currentUser.id}` }
         });
-        const data = await response.json();
-        
-        const approvedMembers = data.members.filter(m => m.status === 'approved');
-        const container = document.getElementById('adminChartsList');
-        
-        if (approvedMembers.length === 0) {
-            container.innerHTML = '<div class="empty-state">No approved members yet</div>';
-            return;
-        }
-        
-        container.innerHTML = approvedMembers.map(member => `
-            <div class="member-card" onclick="openMemberChart(${member.id}, '${member.name}')" style="cursor: pointer;">
-                <h4>${member.name}</h4>
-                <p>BK Centre: ${member.centre}</p>
-            </div>
-        `).join('');
-    } catch (error) {
-        console.error('Error loading charts:', error);
+
+        const data = await res.json();
+
+        const members = data.members.filter(m => m.status === 'approved');
+
+        adminChartsList.innerHTML = members.length
+            ? members.map(m => `
+                <div class="member-card" onclick="openMemberChart(${m.id}, '${m.name}')">
+                    <h4>${m.name}</h4>
+                    <p>${m.centre}</p>
+                </div>
+              `).join('')
+            : '<div class="empty-state">No approved members</div>';
+
+    } catch (err) {
+        console.log('Charts error', err);
     }
 }
 
-// Show Member Dashboard
-async function showMemberDashboard() {
+// ==========================================================
+//                  MEMBER DASHBOARD
+// ==========================================================
+
+function showMemberDashboard() {
     hideAllPages();
-    document.getElementById('memberDashboard').classList.add('active');
-    document.getElementById('memberName').textContent = `Welcome, ${currentUser.name}`;
-    showMemberTab('daily');
-    await loadDailyChecklist();
+    memberDashboard.classList.add('active');
+    memberName.textContent = `Welcome, ${currentUser.name}`;
+
+    setTimeout(() => showMemberTab(null, 'daily'), 10);
 }
 
-// Show Member Tabs
-async function showMemberTab(tab) {
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-    
-    event.target.classList.add('active');
+async function showMemberTab(event, tab) {
+    document.querySelectorAll('#memberDashboard .tab-btn').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('#memberDashboard .tab-content').forEach(c => c.classList.remove('active'));
+
+    const btn = event?.target || document.querySelector(`#memberDashboard .tab-btn[data-tab="${tab}"]`);
+    if (btn) btn.classList.add('active');
+
     document.getElementById(`${tab}Tab`).classList.add('active');
-    
-    if (tab === 'daily') {
-        await loadDailyChecklist();
-    } else if (tab === 'progress') {
-        await loadMyProgress();
-    } else if (tab === 'allcharts') {
-        await loadAllMembersCharts();
-    }
+
+    if (tab === 'daily') loadDailyChecklist();
+    if (tab === 'progress') loadMyProgress();
+    if (tab === 'allcharts') loadAllMembersCharts();
 }
 
-// Load Daily Checklist
+// ==========================================================
+//                   DAILY CHECKLIST
+// ==========================================================
+
 async function loadDailyChecklist() {
     try {
-        const response = await fetch(`${API_URL}/api/points`);
-        const pointsData = await response.json();
+        const res1 = await fetch(`${API_URL}/api/points`);
+        const pointsData = await res1.json();
         allPoints = pointsData.points;
-        
+
         const today = new Date().toISOString().split('T')[0];
-        const checkResponse = await fetch(`${API_URL}/api/members/${currentUser.id}/daily/${today}`);
-        const checkData = await checkResponse.json();
-        
-        const container = document.getElementById('dailyCheckList');
-        container.innerHTML = allPoints.map(point => {
-            const isChecked = checkData.records.find(r => r.point_id === point.id)?.completed || false;
+
+        const res2 = await fetch(`${API_URL}/api/members/${currentUser.id}/daily/${today}`);
+        const dailyData = await res2.json();
+
+        dailyCheckList.innerHTML = allPoints.map(p => {
+            const isChecked = dailyData.records.some(r => r.point_id === p.id && r.completed);
+
             return `
                 <div class="check-item">
-                    <input type="checkbox" id="point-${point.id}" ${isChecked ? 'checked' : ''} 
-                           onchange="updateDailyCheck(${point.id}, this.checked)">
-                    <label for="point-${point.id}">${point.text}</label>
+                    <input type="checkbox" id="point-${p.id}" ${isChecked ? 'checked' : ''}
+                    onchange="updateDailyCheck(${p.id}, this.checked)">
+                    <label for="point-${p.id}">${p.text}</label>
                 </div>
             `;
         }).join('');
-    } catch (error) {
-        console.error('Error loading daily checklist:', error);
+
+    } catch (err) {
+        console.log('Daily error', err);
     }
 }
 
-// Update Daily Check
 async function updateDailyCheck(pointId, completed) {
-    try {
-        const today = new Date().toISOString().split('T')[0];
-        await fetch(`${API_URL}/api/members/${currentUser.id}/daily`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ date: today, pointId, completed })
-        });
-    } catch (error) {
-        console.error('Error updating check:', error);
-    }
+    const today = new Date().toISOString().split('T')[0];
+
+    await fetch(`${API_URL}/api/members/${currentUser.id}/daily`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: today, pointId, completed })
+    });
 }
 
-// Load My Progress
+// ==========================================================
+//               MEMBER PROGRESS CHARTS
+// ==========================================================
+
 async function loadMyProgress() {
-    await loadProgressCharts(currentUser.id, 'progressCharts');
+    loadProgressCharts(currentUser.id, 'progressCharts');
 }
 
-// Load Progress Charts
 async function loadProgressCharts(memberId, containerId) {
     try {
-        const response = await fetch(`${API_URL}/api/members/${memberId}/progress/${currentPeriod}`);
-        const data = await response.json();
-        
-        const container = document.getElementById(containerId);
-        container.innerHTML = data.progress.map(item => {
-            const percentage = Math.round(item.percentage);
-            const colorClass = percentage <= 33 ? 'red' : percentage <= 66 ? 'orange' : 'green';
-            
+        const res = await fetch(`${API_URL}/api/members/${memberId}/progress/${currentPeriod}`);
+        const data = await res.json();
+
+        document.getElementById(containerId).innerHTML = data.progress.map(item => {
+            const percent = Math.round(item.percentage);
+            const color = percent <= 33 ? 'red' : percent <= 66 ? 'orange' : 'green';
+
             return `
                 <div class="chart-item">
                     <div class="chart-label">${item.text}</div>
                     <div class="progress-bar-container">
-                        <div class="progress-bar ${colorClass}" style="width: ${percentage}%">
-                            ${percentage}%
-                        </div>
+                        <div class="progress-bar ${color}" style="width:${percent}%">${percent}%</div>
                     </div>
                 </div>
             `;
         }).join('');
-    } catch (error) {
-        console.error('Error loading progress:', error);
+
+    } catch (err) {
+        console.log('Progress error', err);
     }
 }
 
-// Show Period
-function showPeriod(period) {
+function showPeriod(period, event) {
     currentPeriod = period;
-    document.querySelectorAll('.period-btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
+    document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+    if (event?.target) event.target.classList.add('active');
     loadMyProgress();
 }
 
-// Load All Members Charts
+// ==========================================================
+//                 ALL MEMBERS → CHARTS
+// ==========================================================
+
 async function loadAllMembersCharts() {
     try {
-        const response = await fetch(`${API_URL}/api/members`);
-        const data = await response.json();
-        
-        const approvedMembers = data.members.filter(m => m.status === 'approved' && m.id !== currentUser.id);
-        const container = document.getElementById('allMembersList');
-        
-        if (approvedMembers.length === 0) {
-            container.innerHTML = '<div class="empty-state">No other members to display</div>';
-            return;
-        }
-        
-        container.innerHTML = approvedMembers.map(member => `
-            <div class="member-card" onclick="openMemberChart(${member.id}, '${member.name}')" style="cursor: pointer;">
-                <h4>${member.name}</h4>
-                <p>BK Centre: ${member.centre}</p>
-            </div>
-        `).join('');
-    } catch (error) {
-        console.error('Error loading members:', error);
+        const res = await fetch(`${API_URL}/api/members`);
+        const data = await res.json();
+
+        const members = data.members.filter(m => m.status === 'approved' && m.id !== currentUser.id);
+
+        allMembersList.innerHTML = members.length
+            ? members.map(m => `
+                <div class="member-card" onclick="openMemberChart(${m.id}, '${m.name}')">
+                    <h4>${m.name}</h4>
+                    <p>${m.centre}</p>
+                </div>
+              `).join('')
+            : '<div class="empty-state">No members found</div>';
+
+    } catch (err) {
+        console.log('All charts error', err);
     }
 }
 
-// Open Member Chart Modal
-function openMemberChart(memberId, memberName) {
-    modalMemberId = memberId;
-    document.getElementById('chartMemberName').textContent = memberName;
-    document.getElementById('chartModal').classList.add('show');
+// Modal charts
+function openMemberChart(id, name) {
+    modalMemberId = id;
+
+    chartMemberName.textContent = name;
+    chartModal.classList.add('show');
+
     currentPeriod = 'daily';
-    document.querySelectorAll('#chartModal .period-btn').forEach((btn, i) => {
-        btn.classList.toggle('active', i === 0);
-    });
-    loadProgressCharts(memberId, 'modalCharts');
+
+    document.querySelectorAll('#chartModal .period-btn').forEach((b, i) =>
+        b.classList.toggle('active', i === 0)
+    );
+
+    loadProgressCharts(id, 'modalCharts');
 }
 
-// Show Modal Period
-function showModalPeriod(period) {
+function showModalPeriod(period, event) {
     currentPeriod = period;
-    document.querySelectorAll('#chartModal .period-btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
+    document.querySelectorAll('#chartModal .period-btn').forEach(b => b.classList.remove('active'));
+    if (event?.target) event.target.classList.add('active');
     loadProgressCharts(modalMemberId, 'modalCharts');
 }
 
-// Close Chart Modal
 function closeChartModal() {
-    document.getElementById('chartModal').classList.remove('show');
+    chartModal.classList.remove('show');
     modalMemberId = null;
 }
 
-// Logout
+// ==========================================================
+//                      PASSWORD RESET
+// ==========================================================
+
+// Admin
+async function handleAdminForgotPassword(e) {
+    e.preventDefault();
+    const username = adminForgotUsername.value;
+    resetUsername = username;
+
+    const res = await fetch(`${API_URL}/api/admin/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+        showSuccess('adminForgotSuccess', 'Reset code sent!');
+        setTimeout(() => {
+            hideAllPages();
+            adminResetPasswordPage.classList.add('active');
+        }, 2000);
+    } else {
+        showError('adminForgotError', data.message);
+    }
+}
+
+async function handleAdminResetPassword(e) {
+    e.preventDefault();
+
+    const code = adminResetCode.value;
+    const newPassword = adminNewPassword.value;
+    const confirm = adminConfirmNewPassword.value;
+
+    if (newPassword !== confirm) return showError('adminResetError', 'Passwords mismatch');
+
+    const res = await fetch(`${API_URL}/api/admin/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: resetUsername, code, newPassword })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+        showSuccess('adminResetSuccess', 'Password reset!');
+        adminResetPasswordForm.reset();
+        setTimeout(showAdminLogin, 2000);
+    } else {
+        showError('adminResetError', data.message);
+    }
+}
+
+// Member
+async function handleMemberForgotPassword(e) {
+    e.preventDefault();
+    const mobile = memberForgotMobile.value;
+    resetMobile = mobile;
+
+    const res = await fetch(`${API_URL}/api/members/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mobile })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+        showSuccess('memberForgotSuccess', 'Reset code sent to admin!');
+        setTimeout(() => {
+            hideAllPages();
+            memberResetPasswordPage.classList.add('active');
+        }, 2000);
+    } else {
+        showError('memberForgotError', data.message);
+    }
+}
+
+async function handleMemberResetPassword(e) {
+    e.preventDefault();
+
+    const code = memberResetCode.value;
+    const newPassword = memberNewPassword.value;
+    const confirm = memberConfirmNewPassword.value;
+
+    if (newPassword !== confirm) return showError('memberResetError', 'Passwords mismatch');
+
+    const res = await fetch(`${API_URL}/api/members/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mobile: resetMobile, code, newPassword })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+        showSuccess('memberResetSuccess', 'Password reset!');
+        memberResetPasswordForm.reset();
+        setTimeout(showMemberLogin, 2000);
+    } else {
+        showError('memberResetError', data.message);
+    }
+}
+
+// ==========================================================
+//                  UTIL & LOGOUT
+// ==========================================================
+
 function logout() {
     localStorage.removeItem('currentUser');
     currentUser = null;
     showLanding();
 }
 
-// Update Today's Date
 function updateTodayDate() {
     const today = new Date();
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    document.getElementById('todayDate').textContent = today.toLocaleDateString('en-IN', options);
+    todayDate.textContent = today.toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+    });
 }
 
-// Utility Functions
-function showError(elementId, message) {
-    const element = document.getElementById(elementId);
-    element.textContent = message;
-    element.classList.add('show');
-    setTimeout(() => element.classList.remove('show'), 5000);
+function showError(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 3000);
 }
 
-function showSuccess(elementId, message) {
-    const element = document.getElementById(elementId);
-    element.textContent = message;
-    element.classList.add('show');
-    setTimeout(() => element.classList.remove('show'), 5000);
-}
-
-// ============ PASSWORD RESET FUNCTIONS ============
-
-// Admin Forgot Password
-async function handleAdminForgotPassword(e) {
-    e.preventDefault();
-    const username = document.getElementById('adminForgotUsername').value;
-    resetUsername = username;
-    
-    try {
-        const response = await fetch(`${API_URL}/api/admin/forgot-password`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username })
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok) {
-            showSuccess('adminForgotSuccess', 'Reset code sent to your email! Check iraisevaiyil@gmail.com');
-            setTimeout(() => {
-                hideAllPages();
-                document.getElementById('adminResetPasswordPage').classList.add('active');
-            }, 2000);
-        } else {
-            showError('adminForgotError', data.message || 'Username not found');
-        }
-    } catch (error) {
-        showError('adminForgotError', 'Connection error. Please try again.');
-    }
-}
-
-// Admin Reset Password
-async function handleAdminResetPassword(e) {
-    e.preventDefault();
-    const code = document.getElementById('adminResetCode').value;
-    const newPassword = document.getElementById('adminNewPassword').value;
-    const confirmPassword = document.getElementById('adminConfirmNewPassword').value;
-    
-    if (newPassword !== confirmPassword) {
-        showError('adminResetError', 'Passwords do not match');
-        return;
-    }
-    
-    if (newPassword.length < 6) {
-        showError('adminResetError', 'Password must be at least 6 characters');
-        return;
-    }
-    
-    try {
-        const response = await fetch(`${API_URL}/api/admin/reset-password`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: resetUsername, code, newPassword })
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok) {
-            showSuccess('adminResetSuccess', 'Password reset successful! Redirecting to login...');
-            document.getElementById('adminResetPasswordForm').reset();
-            setTimeout(() => showAdminLogin(), 2000);
-        } else {
-            showError('adminResetError', data.message || 'Invalid or expired reset code');
-        }
-    } catch (error) {
-        showError('adminResetError', 'Connection error. Please try again.');
-    }
-}
-
-// Member Forgot Password
-async function handleMemberForgotPassword(e) {
-    e.preventDefault();
-    const mobile = document.getElementById('memberForgotMobile').value;
-    resetMobile = mobile;
-    
-    try {
-        const response = await fetch(`${API_URL}/api/members/forgot-password`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ mobile })
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok) {
-            showSuccess('memberForgotSuccess', 'Reset code sent to admin email (iraisevaiyil@gmail.com)! Admin will share the code with you.');
-            setTimeout(() => {
-                hideAllPages();
-                document.getElementById('memberResetPasswordPage').classList.add('active');
-            }, 3000);
-        } else {
-            showError('memberForgotError', data.message || 'Mobile number not found');
-        }
-    } catch (error) {
-        showError('memberForgotError', 'Connection error. Please try again.');
-    }
-}
-
-// Member Reset Password
-async function handleMemberResetPassword(e) {
-    e.preventDefault();
-    const code = document.getElementById('memberResetCode').value;
-    const newPassword = document.getElementById('memberNewPassword').value;
-    const confirmPassword = document.getElementById('memberConfirmNewPassword').value;
-    
-    if (newPassword !== confirmPassword) {
-        showError('memberResetError', 'Passwords do not match');
-        return;
-    }
-    
-    if (newPassword.length < 6) {
-        showError('memberResetError', 'Password must be at least 6 characters');
-        return;
-    }
-    
-    try {
-        const response = await fetch(`${API_URL}/api/members/reset-password`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ mobile: resetMobile, code, newPassword })
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok) {
-            showSuccess('memberResetSuccess', 'Password reset successful! Redirecting to login...');
-            document.getElementById('memberResetPasswordForm').reset();
-            setTimeout(() => showMemberLogin(), 2000);
-        } else {
-            showError('memberResetError', data.message || 'Invalid or expired reset code');
-        }
-    } catch (error) {
-        showError('memberResetError', 'Connection error. Please try again.');
-    }
+function showSuccess(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 3000);
 }
