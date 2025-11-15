@@ -676,22 +676,22 @@ async function loadDailyChecklist() {
 
         const container = document.getElementById('dailyCheckList');
         container.innerHTML = allPoints.map(point => {
-            const isChecked = checkData.records.find(r => r.point_id === point.id)?.completed || false;
-            return `
-                <div class="check-item">
-                    <input type="range"
+        const defaultValue = checkData[point.id] ?? 0; // if checkData exists for this point, use it; else 0
+        return `
+            <div class="check-item">
+                <input type="range"
                     min="0"
                     max="100"
-                    value="${percentageValue}"
+                    value="${defaultValue}"
                     class="slider"
                     id="point-${point.id}"
-                    oninput="updateDailyCheck(${point.id}, this.value)">
-                <span id="percent-${point.id}" class="percent-label">${percentageValue}%</span>
+                    oninput="updateDailyCheck(${point.id}, this.value); updateSliderValue(this, ${point.id});">
+                <span id="percent-${point.id}" class="percent-label">${defaultValue}%</span>
+                <label for="point-${point.id}">${escapeHtml(point.text)}</label>
+            </div>
+        `;
+    }).join('');
 
-                    <label for="point-${point.id}">${escapeHtml(point.text)}</label>
-                </div>
-            `;
-        }).join('');
     } catch (error) {
         console.error('Error loading daily checklist:', error);
         showError('memberLoginError', 'Failed to load daily checklist.');
