@@ -699,7 +699,9 @@ async function loadDailyChecklist() {
 }
 function updateSliderValue(slider, pointId) {
     const value = slider.value;
-    document.getElementById(`slider-value-${pointId}`).textContent = value + '%';
+    const span = document.getElementById(`percent-${pointId}`);
+    if (span) span.textContent = value + '%';
+    // document.getElementById(`slider-value-${pointId}`).textContent = value + '%';
 }
 
 
