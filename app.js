@@ -1,5 +1,4 @@
-// app.js - FINAL FIXED VERSION - All Issues Resolved
-
+// app.js — Full frontend with fixes (0-100 sliders, correct save/load + progress)
 // API Configuration
 const API_URL = 'https://bk-spiritual-backend.onrender.com';
 
@@ -656,7 +655,8 @@ async function loadDailyChecklist() {
 
         const container = document.getElementById('dailyCheckList');
         container.innerHTML = allPoints.map(point => {
-            const defaultValue = checkData[point.id] !== undefined ? checkData[point.id] : 0;
+            // defaultValue is integer 0..100
+            const defaultValue = Number(checkData[point.id] !== undefined ? checkData[point.id] : 0);
             console.log(`Point ${point.id}: ${defaultValue}%`);
             
             return `
@@ -698,8 +698,8 @@ function updateSliderDisplay(slider) {
     const span = document.getElementById(`percent-${pointId}`);
     if (span) span.textContent = value + '%';
     
-    // Store in temporary data
-    dailyCheckData[pointId] = parseInt(value);
+    // Store in temporary data as integer 0..100
+    dailyCheckData[pointId] = parseInt(value, 10);
 }
 
 // FIXED: Save all daily checks at once
@@ -713,20 +713,27 @@ async function saveDailyChecks() {
     try {
         const today = new Date().toISOString().split('T')[0];
         
-        // Save all points
-        const savePromises = Object.keys(dailyCheckData).map(pointId => {
-            return fetch(`${API_URL}/api/members/${currentUser.id}/daily`, {
+        // Ensure we fetch points to know which to save (in case some missing)
+        if (!allPoints || allPoints.length === 0) {
+            const ptsResp = await fetch(`${API_URL}/api/points`);
+            const pts = await ptsResp.json();
+            allPoints = pts.points;
+        }
+        
+        // Save all points (use sequential to avoid overwhelming server; you can batch if preferred)
+        for (const p of allPoints) {
+            const pointId = p.id;
+            const completed = Number(dailyCheckData[pointId] !== undefined ? dailyCheckData[pointId] : 0);
+            await fetch(`${API_URL}/api/members/${currentUser.id}/daily`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     date: today, 
-                    pointId: parseInt(pointId), 
-                    completed: parseInt(dailyCheckData[pointId])
+                    pointId: parseInt(pointId, 10), 
+                    completed: parseInt(completed, 10)
                 })
             });
-        });
-        
-        await Promise.all(savePromises);
+        }
         
         messageEl.textContent = '✅ All changes saved successfully!';
         messageEl.classList.add('show');
@@ -873,7 +880,8 @@ function logout() {
 function updateTodayDate() {
     const today = new Date();
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    document.getElementById('todayDate').textContent = today.toLocaleDateString('en-IN', options);
+    const el = document.getElementById('todayDate');
+    if (el) el.textContent = today.toLocaleDateString('en-IN', options);
 }
 
 // Password Reset Functions
@@ -1071,12 +1079,24 @@ async function handleMemberResetPassword(e) {
     }
 }
 
-function escapeHtml(unsafe) {
-    if (unsafe === null || unsafe === undefined) return '';
-    return String(unsafe)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+// Utility: escape html
+function escapeHtml(text) {
+    if (!text && text !== 0) return '';
+    return String(text)
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+}
+
+// Debug endpoint helper (optional)
+async function debugFetchRecords(memberId) {
+    try {
+        const r = await fetch(`${API_URL}/api/debug/records/${memberId}`);
+        const j = await r.json();
+        console.log('DEBUG RECORDS', j);
+    } catch (e) {
+        console.warn('Debug fetch failed', e);
+    }
 }
