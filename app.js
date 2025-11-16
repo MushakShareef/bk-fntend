@@ -1,4 +1,4 @@
-// app.js - Frontend FINAL WORKING VERSION - All features working
+// app.js - FINAL FIXED VERSION - All Issues Resolved
 
 // API Configuration
 const API_URL = 'https://bk-spiritual-backend.onrender.com';
@@ -10,6 +10,7 @@ let allPoints = [];
 let modalMemberId = null;
 let resetUsername = null;
 let resetMobile = null;
+let dailyCheckData = {}; // Store current day's data
 
 // Icons
 const EYE = '👁️';
@@ -158,7 +159,7 @@ function showSuccess(elementId, message) {
     setTimeout(() => {
         element.classList.remove('show');
         element.textContent = '';
-    }, 5000);
+    }, 3000);
 }
 
 function setFormSubmitting(formId, submitting = true) {
@@ -625,26 +626,39 @@ async function showMemberTab(event, tab) {
         await loadDailyChecklist();
     } else if (tab === 'progress') {
         currentPeriod = 'daily';
+        // Reset period buttons
+        document.querySelectorAll('#progressTab .period-btn').forEach((btn, i) => {
+            btn.classList.toggle('active', i === 0);
+        });
         await loadMyProgress();
     } else if (tab === 'allcharts') {
         await loadAllMembersCharts();
     }
 }
 
-// Load Daily Checklist - FIXED
+// FIXED: Load Daily Checklist with proper data persistence
 async function loadDailyChecklist() {
     try {
+        console.log('📋 Loading daily checklist...');
+        
         const response = await fetch(`${API_URL}/api/points`);
         const pointsData = await response.json();
         allPoints = pointsData.points;
+        console.log('✅ Loaded points:', allPoints.length);
 
         const today = new Date().toISOString().split('T')[0];
         const checkResponse = await fetch(`${API_URL}/api/members/${currentUser.id}/daily/${today}`);
         const checkData = await checkResponse.json();
+        console.log('✅ Loaded daily data:', checkData);
+        
+        // Store in global variable
+        dailyCheckData = checkData;
 
         const container = document.getElementById('dailyCheckList');
         container.innerHTML = allPoints.map(point => {
-            const defaultValue = checkData[point.id] ?? 0;
+            const defaultValue = checkData[point.id] !== undefined ? checkData[point.id] : 0;
+            console.log(`Point ${point.id}: ${defaultValue}%`);
+            
             return `
                 <div class="check-item">
                     <input type="range"
@@ -653,36 +667,84 @@ async function loadDailyChecklist() {
                         value="${defaultValue}"
                         class="slider"
                         id="point-${point.id}"
-                        oninput="updateDailyCheck(${point.id}, this.value); updateSliderValue(this, ${point.id});">
+                        data-point-id="${point.id}"
+                        oninput="updateSliderDisplay(this);">
                     <span id="percent-${point.id}" class="percent-label">${defaultValue}%</span>
                     <label for="point-${point.id}">${escapeHtml(point.text)}</label>
                 </div>
             `;
         }).join('');
+        
+        // Add save button after checklist
+        container.innerHTML += `
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="btn btn-primary" onclick="saveDailyChecks()" id="saveDailyBtn">
+                    💾 Save All Changes
+                </button>
+                <div id="dailySaveMessage" class="success-message"></div>
+            </div>
+        `;
 
     } catch (error) {
-        console.error('Error loading daily checklist:', error);
+        console.error('❌ Error loading daily checklist:', error);
         showError('memberLoginError', 'Failed to load daily checklist.');
     }
 }
 
-function updateSliderValue(slider, pointId) {
+// Update slider display only (don't save yet)
+function updateSliderDisplay(slider) {
+    const pointId = slider.dataset.pointId;
     const value = slider.value;
     const span = document.getElementById(`percent-${pointId}`);
     if (span) span.textContent = value + '%';
+    
+    // Store in temporary data
+    dailyCheckData[pointId] = parseInt(value);
 }
 
-// Update Daily Check
-async function updateDailyCheck(pointId, completed) {
+// FIXED: Save all daily checks at once
+async function saveDailyChecks() {
+    const saveBtn = document.getElementById('saveDailyBtn');
+    const messageEl = document.getElementById('dailySaveMessage');
+    
+    saveBtn.disabled = true;
+    saveBtn.textContent = '⏳ Saving...';
+    
     try {
         const today = new Date().toISOString().split('T')[0];
-        await fetch(`${API_URL}/api/members/${currentUser.id}/daily`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ date: today, pointId, completed: Number(completed) })
+        
+        // Save all points
+        const savePromises = Object.keys(dailyCheckData).map(pointId => {
+            return fetch(`${API_URL}/api/members/${currentUser.id}/daily`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    date: today, 
+                    pointId: parseInt(pointId), 
+                    completed: parseInt(dailyCheckData[pointId])
+                })
+            });
         });
+        
+        await Promise.all(savePromises);
+        
+        messageEl.textContent = '✅ All changes saved successfully!';
+        messageEl.classList.add('show');
+        
+        setTimeout(() => {
+            messageEl.classList.remove('show');
+        }, 3000);
+        
+        console.log('✅ All data saved successfully');
+        
     } catch (error) {
-        console.error('Error updating check:', error);
+        console.error('❌ Error saving checks:', error);
+        messageEl.textContent = '❌ Failed to save. Please try again.';
+        messageEl.classList.add('show');
+        messageEl.style.color = '#f44336';
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = '💾 Save All Changes';
     }
 }
 
@@ -691,13 +753,23 @@ async function loadMyProgress() {
     await loadProgressCharts(currentUser.id, 'progressCharts');
 }
 
-// Load Progress Charts - FIXED
+// FIXED: Load Progress Charts with proper data display
 async function loadProgressCharts(memberId, containerId) {
     try {
+        console.log(`📊 Loading progress for member ${memberId}, period: ${currentPeriod}`);
+        
         const response = await fetch(`${API_URL}/api/members/${memberId}/progress/${currentPeriod}`);
         const data = await response.json();
+        
+        console.log('✅ Progress data received:', data);
 
         const container = document.getElementById(containerId);
+        
+        if (!data.progress || data.progress.length === 0) {
+            container.innerHTML = '<div class="empty-state">No data available for this period</div>';
+            return;
+        }
+        
         container.innerHTML = data.progress.map(item => {
             const percentage = Math.round(item.percentage);
             const colorClass = percentage <= 33 ? 'red' : percentage <= 66 ? 'orange' : 'green';
@@ -713,9 +785,13 @@ async function loadProgressCharts(memberId, containerId) {
                 </div>
             `;
         }).join('');
+        
+        console.log('✅ Progress charts displayed');
+        
     } catch (error) {
-        console.error('Error loading progress:', error);
-        showError('memberLoginError', 'Failed to load progress charts.');
+        console.error('❌ Error loading progress:', error);
+        const container = document.getElementById(containerId);
+        container.innerHTML = '<div class="empty-state">Failed to load progress data</div>';
     }
 }
 
@@ -745,6 +821,7 @@ async function loadAllMembersCharts() {
             <div class="member-card" onclick="openMemberChart(${member.id}, '${escapeHtml(member.name).replace(/'/g, "\\'")}')" style="cursor: pointer;">
                 <h4>${escapeHtml(member.name)}</h4>
                 <p>BK Centre: ${escapeHtml(member.centre)}</p>
+                <p style="color: #999; font-size: 13px;">Click to view their progress</p>
             </div>
         `).join('');
     } catch (error) {
@@ -753,15 +830,21 @@ async function loadAllMembersCharts() {
     }
 }
 
-// Open Member Chart Modal
+// FIXED: Open Member Chart Modal
 function openMemberChart(memberId, memberName) {
+    console.log(`📈 Opening chart for member ${memberId}: ${memberName}`);
+    
     modalMemberId = memberId;
     document.getElementById('chartMemberName').textContent = memberName;
     document.getElementById('chartModal').classList.add('show');
     currentPeriod = 'daily';
+    
+    // Reset period buttons to Daily
     document.querySelectorAll('#chartModal .period-btn').forEach((btn, i) => {
         btn.classList.toggle('active', i === 0);
     });
+    
+    // Load the charts
     loadProgressCharts(memberId, 'modalCharts');
 }
 
