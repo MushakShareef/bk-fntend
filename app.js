@@ -471,27 +471,36 @@ async function deleteMember(memberId) {
 }
 
 // Load Points
-async function loadPoints() {
-    try {
-        const response = await fetch(`${API_URL}/api/points`);
-        const data = await response.json();
-        allPoints = data.points;
+// Safe render points (dedupe by id and order)
+function renderDailyPoints(points, savedMap) {
+  // Deduplicate by id (just in case)
+  const seen = new Set();
+  const uniq = [];
+  for (const p of points) {
+    if (!seen.has(p.id)) { seen.add(p.id); uniq.push(p); }
+  }
 
-        const container = document.getElementById('pointsList');
-        container.innerHTML = allPoints.map((point, index) => `
-            <div class="point-card">
-                <h4>Point ${index + 1}</h4>
-                <p>${escapeHtml(point.text)}</p>
-                <div class="card-actions">
-                    <button class="btn-secondary btn-small" onclick="editPoint(${point.id}, '${escapeHtml(point.text).replace(/'/g, "\\'")}')">Edit</button>
-                    <button class="btn-danger btn-small" onclick="deletePoint(${point.id})">Delete</button>
-                </div>
-            </div>
-        `).join('');
-    } catch (error) {
-        console.error('Error loading points:', error);
-        showError('adminLoginError', 'Failed to load points.');
-    }
+  // Sort by order_num then id (defensive)
+  uniq.sort((a,b) => (a.order_num || 0) - (b.order_num || 0) || a.id - b.id);
+
+  const container = document.getElementById('dailyCheckList');
+  const today = new Date().toISOString().split('T')[0];
+  let html = '';
+  uniq.forEach(point => {
+    const val = Number((savedMap && savedMap[point.id] !== undefined) ? savedMap[point.id] : 0);
+    html += `
+      <div class="check-item">
+        <input type="range" min="0" max="100" value="${val}" class="slider" id="point-${point.id}" data-point-id="${point.id}" oninput="updateSliderDisplay(this)">
+        <span id="percent-${point.id}" class="percent-label">${val}%</span>
+        <label for="point-${point.id}">${escapeHtml(point.text)}</label>
+      </div>
+    `;
+  });
+
+  html += `<div style="text-align:center;margin-top:18px;">
+            <button class="btn btn-primary" onclick="saveDailyChecks()">💾 Save All Changes</button>
+          </div>`;
+  container.innerHTML = html;
 }
 
 function showAddPointForm() {

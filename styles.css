@@ -106,3 +106,23 @@ body {
     .logo img { max-width:100px; }
     .dashboard-header { flex-direction:column; gap:10px; text-align:center; }
 }
+
+
+/* --- Responsive / overflow fixes --- */
+* { box-sizing: border-box; }
+.container { max-width: 960px; margin: 0 auto; padding: 12px; }
+
+.check-item { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.check-item label { flex: 1 1 200px; min-width: 160px; word-break: break-word; }
+.slider { flex: 0 0 220px; min-width: 140px; max-width: 100%; }
+.percent-label { flex: 0 0 56px; text-align:center; }
+
+.progress-bar-container { width: 100%; max-width: 100%; overflow:hidden; }
+.chart-item { width:100%; box-sizing:border-box; }
+
+/* make the tab content wrap on small screens */
+.tabs { display:flex; flex-wrap:wrap; gap:8px; }
+.tab-btn { flex: 1 1 auto; min-width: 120px; }
+
+/* modal responsiveness */
+.modal-content { width: 95%; max-width: 720px; margin: 20px auto; }
