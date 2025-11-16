@@ -672,31 +672,33 @@ async function loadDailyChecklist() {
 
         const today = new Date().toISOString().split('T')[0];
         const checkResponse = await fetch(`${API_URL}/api/members/${currentUser.id}/daily/${today}`);
-        const checkData = await checkResponse.json();
+        const checkData = await checkResponse.json();  // FIXED: This now returns object {pointId: effort}
 
         const container = document.getElementById('dailyCheckList');
         container.innerHTML = allPoints.map(point => {
-        const defaultValue = checkData[point.id] ?? 0; // if checkData exists for this point, use it; else 0
-        return `
-            <div class="check-item">
-                <input type="range"
-                    min="0"
-                    max="100"
-                    value="${defaultValue}"
-                    class="slider"
-                    id="point-${point.id}"
-                    oninput="updateDailyCheck(${point.id}, this.value); updateSliderValue(this, ${point.id});">
-                <span id="percent-${point.id}" class="percent-label">${defaultValue}%</span>
-                <label for="point-${point.id}">${escapeHtml(point.text)}</label>
-            </div>
-        `;
-    }).join('');
+            const defaultValue = checkData[point.id] ?? 0; // FIXED: Get effort value for this point
+            return `
+                <div class="check-item">
+                    <input type="range"
+                        min="0"
+                        max="100"
+                        value="${defaultValue}"
+                        class="slider"
+                        id="point-${point.id}"
+                        oninput="updateDailyCheck(${point.id}, this.value); updateSliderValue(this, ${point.id});">
+                    <span id="percent-${point.id}" class="percent-label">${defaultValue}%</span>
+                    <label for="point-${point.id}">${escapeHtml(point.text)}</label>
+                </div>
+            `;
+        }).join('');
 
     } catch (error) {
         console.error('Error loading daily checklist:', error);
         showError('memberLoginError', 'Failed to load daily checklist.');
     }
 }
+
+
 function updateSliderValue(slider, pointId) {
     const value = slider.value;
     const span = document.getElementById(`percent-${pointId}`);
