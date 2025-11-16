@@ -1,303 +1,195 @@
-<!DOCTYPE html>
-<html lang="ta">
+<!doctype html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Spiritual Chart for BK Students Trichy</title>
-    <link rel="stylesheet" href="styles.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Spiritual Chart — BK Trichy</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-
-<!-- Landing Page -->
-<div id="landingPage" class="page active">
-    <div class="container">
-        <div class="logo-container">
-            <div class="logo">
-                <img src="/baba.png" alt="baba" />
-            </div>
+  <div id="app">
+    <header class="topbar">
+      <div class="brand-row">
+        <a id="logoLink" href="#" title="Admin Login (click logo)">
+          <img id="logoImg" src="logo-placeholder.png" alt="Baba logo" />
+        </a>
+        <div class="brand-text">
+          <div class="brand-title">Spiritual Chart</div>
+          <div class="brand-sub">for BK - Trichy</div>
         </div>
-        <h1 class="om-shanthi">Om Shanthi</h1>
-        <h2 class="app-title">Spiritual Chart for BK Students Trichy</h2>
+      </div>
+      <nav class="top-actions">
+        <button class="btn small" onclick="showLanding()">Home</button>
+        <button class="btn small" onclick="showMemberLogin()">Student Login</button>
+        <button class="btn small" onclick="showRegister()">Register</button>
+      </nav>
+    </header>
 
-        <div class="button-group">
-            <button class="btn btn-primary" onclick="showAdminLogin()">Admin Login</button>
-            <button class="btn btn-secondary" onclick="showMemberLogin()">Student Login</button>
-            <button class="btn btn-tertiary" onclick="showRegister()">Student Register</button>
+    <main class="main">
+      <!-- LANDING -->
+      <section id="landingPage" class="page active center-card">
+        <div class="card landing-card">
+          <h1>Spiritual Chart</h1>
+          <p class="muted">A simple, focused tracker for spiritual practice — BK Trichy</p>
+          <div class="stack">
+            <button class="btn primary large" onclick="showMemberLogin()">Student Login</button>
+            <button class="btn outline large" onclick="showRegister()">Student Registration</button>
+          </div>
+          <p class="muted small">Logo links to Admin Login</p>
         </div>
-    </div>
-</div>
+      </section>
 
-<!-- Admin Login -->
-<div id="adminLoginPage" class="page">
-    <div class="container">
-        <button class="btn-back" onclick="showLanding()">← Back</button>
-        <h2 class="page-title">Admin Login</h2>
-
-        <form id="adminLoginForm" class="form">
-            <div class="form-group">
-                <label>Username</label>
-                <input type="text" id="adminUsername" required />
+      <!-- MEMBER REGISTER -->
+      <section id="registerPage" class="page">
+        <div class="card form-card">
+          <h2>Student Registration</h2>
+          <form id="registerForm" class="form-grid">
+            <label>Name<input id="regName" /></label>
+            <label>BK Centre<input id="regCentre" /></label>
+            <label>Mobile<input id="regMobile" inputmode="numeric" maxlength="10" /></label>
+            <label>Password<input id="regPassword" type="password" /></label>
+            <div class="row gap">
+              <button class="btn primary" type="submit">Register</button>
+              <button class="btn" type="button" onclick="showMemberLogin()">Back</button>
             </div>
-            <div class="form-group">
-                <label>Password</label>
-                <input type="password" id="adminPassword" required />
-            </div>
-            <button type="submit" class="btn btn-primary">Login</button>
-            <div id="adminLoginError" class="error-message"></div>
-
-            <div class="forgot-password">
-                <a href="#" onclick="showAdminForgotPassword(event)">Forgot Password?</a>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Admin Forgot Password -->
-<div id="adminForgotPasswordPage" class="page">
-    <div class="container">
-        <button class="btn-back" onclick="showAdminLogin()">← Back</button>
-        <h2 class="page-title">Admin Password Reset</h2>
-
-        <form id="adminForgotPasswordForm" class="form">
-            <div class="form-group">
-                <label>Username</label>
-                <input type="text" id="adminForgotUsername" required />
-            </div>
-            <button type="submit" class="btn btn-primary">Send Reset Code</button>
-            <div id="adminForgotError" class="error-message"></div>
-            <div id="adminForgotSuccess" class="success-message"></div>
-        </form>
-    </div>
-</div>
-
-<!-- Admin Reset Password -->
-<div id="adminResetPasswordPage" class="page">
-    <div class="container">
-        <button class="btn-back" onclick="showAdminLogin()">← Back</button>
-        <h2 class="page-title">Enter Reset Code</h2>
-
-        <form id="adminResetPasswordForm" class="form">
-            <div class="form-group">
-                <label>Reset Code</label>
-                <input type="text" id="adminResetCode" required placeholder="6-digit code" />
-            </div>
-            <div class="form-group">
-                <label>New Password</label>
-                <input type="password" id="adminNewPassword" required />
-            </div>
-            <div class="form-group">
-                <label>Confirm New Password</label>
-                <input type="password" id="adminConfirmNewPassword" required />
-            </div>
-
-            <button type="submit" class="btn btn-primary">Reset Password</button>
-
-            <div id="adminResetError" class="error-message"></div>
-            <div id="adminResetSuccess" class="success-message"></div>
-        </form>
-    </div>
-</div>
-
-<!-- Member Login -->
-<div id="memberLoginPage" class="page">
-    <div class="container">
-        <button class="btn-back" onclick="showLanding()">← Back</button>
-        <h2 class="page-title">Member Login</h2>
-
-        <form id="memberLoginForm" class="form">
-            <div class="form-group">
-                <label>Mobile Number</label>
-                <input type="tel" id="memberMobile" required />
-            </div>
-            <div class="form-group">
-                <label>Password</label>
-                <input type="password" id="memberPassword" required />
-            </div>
-
-            <button type="submit" class="btn btn-primary">Login</button>
-
-            <div id="memberLoginError" class="error-message"></div>
-
-            <div class="forgot-password">
-                <a href="#" onclick="showMemberForgotPassword(event)">Forgot Password?</a>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Member Forgot -->
-<div id="memberForgotPasswordPage" class="page">
-    <div class="container">
-        <button class="btn-back" onclick="showMemberLogin()">← Back</button>
-        <h2 class="page-title">Member Password Reset</h2>
-
-        <form id="memberForgotPasswordForm" class="form">
-            <div class="form-group">
-                <label>Mobile Number</label>
-                <input type="tel" id="memberForgotMobile" required />
-            </div>
-            <button type="submit" class="btn btn-primary">Send Reset Code</button>
-
-            <div id="memberForgotError" class="error-message"></div>
-            <div id="memberForgotSuccess" class="success-message"></div>
-        </form>
-    </div>
-</div>
-
-<!-- Member Reset -->
-<div id="memberResetPasswordPage" class="page">
-    <div class="container">
-        <button class="btn-back" onclick="showMemberLogin()">← Back</button>
-        <h2 class="page-title">Enter Reset Code</h2>
-
-        <form id="memberResetPasswordForm" class="form">
-            <div class="form-group">
-                <label>Reset Code</label>
-                <input type="text" id="memberResetCode" required placeholder="6-digit code" />
-            </div>
-            <div class="form-group">
-                <label>New Password</label>
-                <input type="password" id="memberNewPassword" required />
-            </div>
-            <div class="form-group">
-                <label>Confirm New Password</label>
-                <input type="password" id="memberConfirmNewPassword" required />
-            </div>
-
-            <button type="submit" class="btn btn-primary">Reset Password</button>
-
-            <div id="memberResetError" class="error-message"></div>
-            <div id="memberResetSuccess" class="success-message"></div>
-        </form>
-    </div>
-</div>
-
-<!-- Member Register -->
-<div id="registerPage" class="page">
-    <div class="container">
-        <button class="btn-back" onclick="showLanding()">← Back</button>
-        <h2 class="page-title">Member Registration</h2>
-
-        <form id="registerForm" class="form">
-            <div class="form-group">
-                <label>Name</label>
-                <input type="text" id="regName" required />
-            </div>
-            <div class="form-group">
-                <label>BK Centre</label>
-                <input type="text" id="regCentre" required />
-            </div>
-            <div class="form-group">
-                <label>Mobile Number</label>
-                <input type="tel" id="regMobile" required />
-            </div>
-            <div class="form-group">
-                <label>Password</label>
-                <input type="password" id="regPassword" required />
-            </div>
-            <div class="form-group">
-                <label>Confirm Password</label>
-                <input type="password" id="regConfirmPassword" required />
-            </div>
-
-            <button type="submit" class="btn btn-primary">Register</button>
-
-            <div id="registerError" class="error-message"></div>
-            <div id="registerSuccess" class="success-message"></div>
-        </form>
-    </div>
-</div>
-
-<!-- Admin Dashboard -->
-<div id="adminDashboard" class="page">
-    <div class="dashboard-header">
-        <h2>Admin Dashboard</h2>
-        <button class="btn btn-logout" onclick="logout()">Logout</button>
-    </div>
-
-    <div class="container">
-        <div class="tabs">
-            <button class="tab-btn active" data-tab="members" onclick="showAdminTab(event, 'members')">All Members</button>
-            <button class="tab-btn" data-tab="points" onclick="showAdminTab(event, 'points')">Manage Points</button>
-            <button class="tab-btn" data-tab="charts" onclick="showAdminTab(event, 'charts')">View Charts</button>
+            <div id="registerError" class="form-error"></div>
+            <div id="registerSuccess" class="form-success"></div>
+          </form>
         </div>
+      </section>
 
-        <div id="membersTab" class="tab-content active">
-            <div id="membersList"></div>
-        </div>
-
-        <div id="pointsTab" class="tab-content">
-            <button class="btn btn-primary mb-20" onclick="showAddPointForm()">+ Add New Point</button>
-
-            <div id="addPointForm" class="form hidden">
-                <h3>Add New Point</h3>
-                <div class="form-group">
-                    <label>Point Text (Tamil)</label>
-                    <textarea id="newPointText" required></textarea>
-                </div>
-                <button class="btn btn-primary" onclick="addPoint()">Add</button>
-                <button class="btn btn-secondary" onclick="hideAddPointForm()">Cancel</button>
+      <!-- MEMBER LOGIN -->
+      <section id="memberLoginPage" class="page">
+        <div class="card form-card">
+          <h2>Student Login</h2>
+          <form id="memberLoginForm" class="form-grid">
+            <label>Mobile<input id="memberMobile" inputmode="numeric" maxlength="10" /></label>
+            <label>Password<input id="memberPassword" type="password" /></label>
+            <div class="row gap">
+              <button class="btn primary" type="submit">Login</button>
+              <button class="btn" type="button" onclick="showRegister()">Register</button>
             </div>
-
-            <div id="pointsList"></div>
+            <div id="memberLoginError" class="form-error"></div>
+          </form>
         </div>
+      </section>
 
-        <div id="chartsTab" class="tab-content">
-            <div id="adminChartsList"></div>
-        </div>
-    </div>
-</div>
-
-<!-- Member Dashboard -->
-<div id="memberDashboard" class="page">
-    <div class="dashboard-header">
-        <h2 id="memberName">Welcome</h2>
-        <button class="btn btn-logout" onclick="logout()">Logout</button>
-    </div>
-
-    <div class="container">
-        <div class="tabs">
-            <button class="tab-btn active" data-tab="daily" onclick="showMemberTab(event, 'daily')">Daily Check</button>
-            <button class="tab-btn" data-tab="progress" onclick="showMemberTab(event, 'progress')">My Progress</button>
-            <button class="tab-btn" data-tab="allcharts" onclick="showMemberTab(event, 'allcharts')">View All Charts</button>
-        </div>
-
-        <div id="dailyTab" class="tab-content active">
-            <div class="date-display">Today: <span id="todayDate"></span></div>
-            <div id="dailyCheckList"></div>
-        </div>
-
-        <div id="progressTab" class="tab-content">
-            <div class="period-selector">
-                <button class="period-btn active" onclick="showPeriod('daily', event)">Daily</button>
-                <button class="period-btn" onclick="showPeriod('weekly', event)">Weekly</button>
-                <button class="period-btn" onclick="showPeriod('monthly', event)">Monthly</button>
-                <button class="period-btn" onclick="showPeriod('yearly', event)">Yearly</button>
+      <!-- ADMIN LOGIN (and will be opened when logo clicked) -->
+      <section id="adminLoginPage" class="page">
+        <div class="card form-card">
+          <h2>Admin Login</h2>
+          <form id="adminLoginForm" class="form-grid">
+            <label>Username<input id="adminUsername" /></label>
+            <label>Password<input id="adminPassword" type="password" /></label>
+            <div class="row gap">
+              <button class="btn primary" type="submit">Login</button>
+              <button class="btn" type="button" onclick="showLanding()">Back</button>
             </div>
-            <div id="progressCharts"></div>
+            <div id="adminLoginError" class="form-error"></div>
+          </form>
         </div>
+      </section>
 
-        <div id="allchartsTab" class="tab-content">
-            <div id="allMembersList"></div>
+      <!-- MEMBER DASHBOARD -->
+      <section id="memberDashboard" class="page dashboard">
+        <div class="card dashboard-card">
+          <div class="dash-top row between">
+            <div>
+              <h3 id="memberName">Welcome</h3>
+              <div id="todayDate" class="muted small"></div>
+            </div>
+            <div class="row gap">
+              <button class="btn" onclick="logout()">Logout</button>
+            </div>
+          </div>
+
+          <div class="tabs row gap">
+            <button class="tab-btn active" onclick="showMemberTab(event,'daily')">Daily</button>
+            <button class="tab-btn" onclick="showMemberTab(event,'progress')">Progress</button>
+            <button class="tab-btn" onclick="showMemberTab(event,'others')">Other Members</button>
+          </div>
+
+          <div id="dailyTab" class="tab-content active">
+            <div id="dailyCheckList" class="stack"></div>
+            <div style="text-align:center; margin-top:12px">
+              <button class="btn primary" onclick="saveDailyChecks()">💾 Save All</button>
+              <div id="dailySaveMsg" class="form-success"></div>
+            </div>
+          </div>
+
+          <div id="progressTab" class="tab-content">
+            <div class="row gap wrap">
+              <button class="btn period-btn active" onclick="showPeriod('daily',event)">Daily</button>
+              <button class="btn period-btn" onclick="showPeriod('weekly',event)">Weekly</button>
+              <button class="btn period-btn" onclick="showPeriod('monthly',event)">Monthly</button>
+              <button class="btn period-btn" onclick="showPeriod('yearly',event)">Yearly</button>
+            </div>
+            <div id="progressCharts" class="stack" style="margin-top:12px"></div>
+          </div>
+
+          <div id="othersTab" class="tab-content">
+            <div id="allMembersList" class="list-grid"></div>
+          </div>
         </div>
-    </div>
-</div>
+      </section>
 
-<!-- Member Chart Modal -->
-<div id="chartModal" class="modal">
-    <div class="modal-content">
-        <button class="modal-close" onclick="closeChartModal()">×</button>
-        <h3 id="chartMemberName">Member</h3>
-        <div class="period-selector">
-            <button class="period-btn active" onclick="showModalPeriod('daily', event)">Daily</button>
-            <button class="period-btn" onclick="showModalPeriod('weekly', event)">Weekly</button>
-            <button class="period-btn" onclick="showModalPeriod('monthly', event)">Monthly</button>
-            <button class="period-btn" onclick="showModalPeriod('yearly', event)">Yearly</button>
+      <!-- ADMIN DASHBOARD -->
+      <section id="adminDashboard" class="page dashboard">
+        <div class="card dashboard-card">
+          <div class="dash-top row between">
+            <h3>Admin Dashboard</h3>
+            <div class="row gap">
+              <button class="btn" onclick="logout()">Logout</button>
+            </div>
+          </div>
+
+          <div class="tabs row gap">
+            <button class="tab-btn active" onclick="showAdminTab(event,'members')">All Members</button>
+            <button class="tab-btn" onclick="showAdminTab(event,'points')">Chart Points</button>
+          </div>
+
+          <div id="membersTab" class="tab-content active">
+            <div id="membersList" class="list-grid"></div>
+          </div>
+
+          <div id="pointsTab" class="tab-content">
+            <div class="row between">
+              <h4>Points</h4>
+              <div><button class="btn" onclick="showAddPoint()">+ Add Point</button></div>
+            </div>
+            <div id="pointsList" class="list-grid" style="margin-top:10px"></div>
+
+            <div id="addPointForm" class="card small hidden" style="margin-top:12px">
+              <label>Point text<input id="newPointText" /></label>
+              <div class="row gap" style="margin-top:8px">
+                <button class="btn primary" onclick="addPoint()">Add</button>
+                <button class="btn" onclick="hideAddPoint()">Cancel</button>
+              </div>
+            </div>
+          </div>
         </div>
-        <div id="modalCharts"></div>
-    </div>
-</div>
+      </section>
 
-<script src="app.js"></script>
+      <!-- Chart Modal -->
+      <div id="chartModal" class="modal">
+        <div class="modal-content">
+          <button class="modal-close" onclick="closeChartModal()">✕</button>
+          <h3 id="chartMemberName">Member</h3>
+          <div class="row gap wrap" style="margin-top:8px">
+            <button class="btn period-btn active" onclick="showModalPeriod('daily',event)">Daily</button>
+            <button class="btn period-btn" onclick="showModalPeriod('weekly',event)">Weekly</button>
+            <button class="btn period-btn" onclick="showModalPeriod('monthly',event)">Monthly</button>
+            <button class="btn period-btn" onclick="showModalPeriod('yearly',event)">Yearly</button>
+          </div>
+          <div id="modalCharts" class="stack" style="margin-top:10px"></div>
+        </div>
+      </div>
+
+    </main>
+
+    <footer class="footer muted">BK Trichy • Spiritual Chart</footer>
+  </div>
+
+  <script src="app.js"></script>
 </body>
 </html>
