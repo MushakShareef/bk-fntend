@@ -46,6 +46,11 @@ body {
     margin-bottom: 20px;
 }
 
+.logo img {
+    max-width: 150px;
+    height: auto;
+}
+
 .om-shanthi {
     text-align: center;
     font-size: 32px;
@@ -82,12 +87,17 @@ body {
     width: 100%;
 }
 
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 .btn-primary {
     background: #ff6600;
     color: white;
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
     background: #e55a00;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(255, 102, 0, 0.3);
@@ -98,7 +108,7 @@ body {
     color: white;
 }
 
-.btn-secondary:hover {
+.btn-secondary:hover:not(:disabled) {
     background: #45a049;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
@@ -110,7 +120,7 @@ body {
     border: 2px solid #ff6600;
 }
 
-.btn-tertiary:hover {
+.btn-tertiary:hover:not(:disabled) {
     background: #fff5eb;
     transform: translateY(-2px);
 }
@@ -324,6 +334,7 @@ body {
     margin-top: 15px;
     display: flex;
     gap: 10px;
+    flex-wrap: wrap;
 }
 
 /* Daily Checklist */
@@ -349,17 +360,53 @@ body {
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
-.check-item input[type="checkbox"] {
-    width: 24px;
-    height: 24px;
-    cursor: pointer;
-}
-
 .check-item label {
     flex: 1;
     font-size: 15px;
     line-height: 1.4;
     cursor: pointer;
+}
+
+/* Slider Styles */
+.slider {
+    -webkit-appearance: none;
+    width: 150px;
+    height: 8px;
+    border-radius: 5px;
+    background: #ddd;
+    outline: none;
+    opacity: 0.9;
+    transition: opacity 0.2s;
+}
+
+.slider:hover {
+    opacity: 1;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #ff6600;
+    cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #ff6600;
+    cursor: pointer;
+    border: none;
+}
+
+.percent-label {
+    min-width: 45px;
+    font-weight: 600;
+    color: #ff6600;
+    font-size: 16px;
 }
 
 /* Progress Charts */
@@ -470,6 +517,10 @@ body {
     color: #999;
 }
 
+.modal-close:hover {
+    color: #333;
+}
+
 /* Utility Classes */
 .hidden {
     display: none !important;
@@ -503,6 +554,10 @@ body {
         font-size: 60px;
     }
     
+    .logo img {
+        max-width: 100px;
+    }
+    
     .dashboard-header {
         flex-direction: column;
         gap: 10px;
@@ -520,5 +575,22 @@ body {
     
     .form {
         padding: 20px;
+    }
+    
+    .check-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .slider {
+        width: 100%;
+    }
+    
+    .card-actions {
+        flex-direction: column;
+    }
+    
+    .card-actions button {
+        width: 100%;
     }
 }

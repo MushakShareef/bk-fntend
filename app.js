@@ -1,7 +1,7 @@
-// app.js - Frontend with improved UX: password toggles, validation, strength, and safer submits
+// app.js - Frontend FINAL WORKING VERSION - All features working
 
 // API Configuration
-const API_URL = 'https://bk-spiritual-backend.onrender.com'; // Replace with your Render backend URL
+const API_URL = 'https://bk-spiritual-backend.onrender.com';
 
 // Global State
 let currentUser = null;
@@ -11,7 +11,7 @@ let modalMemberId = null;
 let resetUsername = null;
 let resetMobile = null;
 
-// Minimal helper icons (we'll use plain text for wide compatibility)
+// Icons
 const EYE = '👁️';
 const EYE_SLASH = '🙈';
 
@@ -26,7 +26,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Setup Event Listeners
 function setupEventListeners() {
-    // Forms (use try/catch in case element not present)
     safeAddListener('adminLoginForm', 'submit', handleAdminLogin);
     safeAddListener('memberLoginForm', 'submit', handleMemberLogin);
     safeAddListener('registerForm', 'submit', handleRegister);
@@ -36,30 +35,22 @@ function setupEventListeners() {
     safeAddListener('memberResetPasswordForm', 'submit', handleMemberResetPassword);
 }
 
-// Safe utility to attach listener if element exists
 function safeAddListener(id, event, fn) {
     const el = document.getElementById(id);
     if (el) el.addEventListener(event, fn);
 }
 
-// Add eye toggle buttons to password inputs and hook strength/confirm logic
 function enhancePasswordFields() {
     const passwordFieldIds = [
-        'adminPassword',
-        'adminNewPassword',
-        'adminConfirmNewPassword',
-        'memberPassword',
-        'memberNewPassword',
-        'memberConfirmNewPassword',
-        'regPassword',
-        'regConfirmPassword'
+        'adminPassword', 'adminNewPassword', 'adminConfirmNewPassword',
+        'memberPassword', 'memberNewPassword', 'memberConfirmNewPassword',
+        'regPassword', 'regConfirmPassword'
     ];
 
     passwordFieldIds.forEach(id => {
         const input = document.getElementById(id);
         if (!input) return;
 
-        // Create toggle button (span)
         const toggle = document.createElement('button');
         toggle.type = 'button';
         toggle.className = 'password-toggle';
@@ -74,30 +65,23 @@ function enhancePasswordFields() {
             if (input.type === 'password') {
                 input.type = 'text';
                 toggle.innerText = EYE_SLASH;
-                toggle.setAttribute('aria-label', 'Hide password');
             } else {
                 input.type = 'password';
                 toggle.innerText = EYE;
-                toggle.setAttribute('aria-label', 'Show password');
             }
             input.focus();
         });
 
-        // Place toggle next to input (if wrapped) or insert after
         if (input.parentNode) {
-            // wrap input and toggle in container for neat placement
             const container = document.createElement('span');
             container.style.display = 'inline-flex';
             container.style.alignItems = 'center';
             input.parentNode.insertBefore(container, input);
             container.appendChild(input);
             container.appendChild(toggle);
-        } else {
-            input.insertAdjacentElement('afterend', toggle);
         }
 
-        // Add password strength meter to new password inputs
-        if (/(NewPassword|regPassword|adminNewPassword|memberNewPassword)/i.test(id)) {
+        if (/(NewPassword|regPassword)/i.test(id)) {
             const meter = document.createElement('div');
             meter.className = 'pw-meter';
             meter.style.marginTop = '6px';
@@ -114,7 +98,6 @@ function enhancePasswordFields() {
     });
 }
 
-// Mobile input UX improvements
 function enhanceMobileInputs() {
     const mobileIds = ['memberMobile', 'regMobile', 'memberForgotMobile'];
     mobileIds.forEach(id => {
@@ -124,13 +107,11 @@ function enhanceMobileInputs() {
         el.setAttribute('pattern', '\\d*');
         el.setAttribute('maxlength', '10');
         el.addEventListener('input', () => {
-            // strip non-digits
             el.value = el.value.replace(/\D/g, '').slice(0, 10);
         });
     });
 }
 
-// Password strength helper (very simple scoring)
 function passwordStrengthScore(pw) {
     if (!pw) return 0;
     let score = 0;
@@ -139,8 +120,9 @@ function passwordStrengthScore(pw) {
     if (/[A-Z]/.test(pw)) score += 1;
     if (/[0-9]/.test(pw)) score += 1;
     if (/[^A-Za-z0-9]/.test(pw)) score += 1;
-    return score; // 0..5
+    return score;
 }
+
 function scoreLabel(score) {
     if (score <= 1) return 'Very Weak';
     if (score === 2) return 'Weak';
@@ -148,28 +130,26 @@ function scoreLabel(score) {
     if (score === 4) return 'Strong';
     return 'Very Strong';
 }
+
 function scoreColor(score) {
-    if (score <= 1) return '#d9534f'; // red
-    if (score === 2) return '#f0ad4e'; // orange
-    if (score === 3) return '#f7dc6f'; // yellow
-    if (score === 4) return '#5cb85c'; // green
+    if (score <= 1) return '#d9534f';
+    if (score === 2) return '#f0ad4e';
+    if (score === 3) return '#f7dc6f';
+    if (score === 4) return '#5cb85c';
     return '#3c763d';
 }
 
-// Utility: show error and clear older one
 function showError(elementId, message) {
     const element = document.getElementById(elementId);
     if (!element) return;
     element.textContent = message;
     element.classList.add('show');
-    // remove after 5s
     setTimeout(() => {
         element.classList.remove('show');
         element.textContent = '';
     }, 5000);
 }
 
-// Utility: success message
 function showSuccess(elementId, message) {
     const element = document.getElementById(elementId);
     if (!element) return;
@@ -181,7 +161,6 @@ function showSuccess(elementId, message) {
     }, 5000);
 }
 
-// Disable/Enable a form's submit button (by form id)
 function setFormSubmitting(formId, submitting = true) {
     const form = document.getElementById(formId);
     if (!form) return;
@@ -251,7 +230,6 @@ async function handleAdminLogin(e) {
     const username = document.getElementById('adminUsername').value.trim();
     const password = document.getElementById('adminPassword').value;
 
-    // Basic client validation
     if (!username || !password) {
         showError('adminLoginError', 'Please enter username and password.');
         setFormSubmitting('adminLoginForm', false);
@@ -270,7 +248,6 @@ async function handleAdminLogin(e) {
         try {
             data = JSON.parse(dataText);
         } catch (err) {
-            // if server returned HTML or empty, show generic error
             showError('adminLoginError', 'Invalid server response.');
             setFormSubmitting('adminLoginForm', false);
             return;
@@ -415,11 +392,10 @@ async function showAdminTab(event, tab) {
     document.querySelectorAll('#adminDashboard .tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('#adminDashboard .tab-content').forEach(content => content.classList.remove('active'));
 
-    // Safe event handling
     if (event && event.target) {
         event.target.classList.add('active');
     } else {
-        document.querySelector(`#adminDashboard button[data-tab="${tab}"]`)?.classList.add('active');
+        document.querySelector(`#adminDashboard button[onclick*="${tab}"]`)?.classList.add('active');
     }
 
     document.getElementById(`${tab}Tab`).classList.add('active');
@@ -440,12 +416,11 @@ async function loadAllMembers() {
             headers: { 'Authorization': `Bearer ${currentUser?.id || ''}` }
         });
 
-        // handle non-JSON gracefully
         const text = await response.text();
         let data;
         try { data = JSON.parse(text); } catch (err) {
             console.error('Members error', err, text);
-            showError('adminLoginError', 'Failed to load members. Server returned invalid response.');
+            showError('adminLoginError', 'Failed to load members.');
             return;
         }
 
@@ -463,7 +438,8 @@ async function loadAllMembers() {
                 <p>Mobile: ${escapeHtml(member.mobile)}</p>
                 <p>Registered: ${new Date(member.created_at).toLocaleDateString('en-IN')}</p>
                 <div class="card-actions">
-                    <button class="btn-danger" onclick="deleteMember(${member.id})">Delete Member</button>
+                    <button class="btn-secondary btn-small" onclick="openMemberChart(${member.id}, '${escapeHtml(member.name).replace(/'/g, "\\'")}')">View Chart</button>
+                    <button class="btn-danger btn-small" onclick="deleteMember(${member.id})">Delete</button>
                 </div>
             </div>
         `).join('');
@@ -475,7 +451,7 @@ async function loadAllMembers() {
 
 // Delete Member
 async function deleteMember(memberId) {
-    if (!confirm('Are you sure you want to delete this member? All their data will be permanently removed.')) return;
+    if (!confirm('Are you sure you want to delete this member?')) return;
 
     try {
         const response = await fetch(`${API_URL}/api/admin/delete-member/${memberId}`, {
@@ -507,7 +483,7 @@ async function loadPoints() {
                 <h4>Point ${index + 1}</h4>
                 <p>${escapeHtml(point.text)}</p>
                 <div class="card-actions">
-                    <button class="btn-secondary btn-small" onclick="editPoint(${point.id}, '${point.text.replace(/'/g, "\\'")}')">Edit</button>
+                    <button class="btn-secondary btn-small" onclick="editPoint(${point.id}, '${escapeHtml(point.text).replace(/'/g, "\\'")}')">Edit</button>
                     <button class="btn-danger btn-small" onclick="deletePoint(${point.id})">Delete</button>
                 </div>
             </div>
@@ -518,7 +494,6 @@ async function loadPoints() {
     }
 }
 
-// Show Add Point Form
 function showAddPointForm() {
     document.getElementById('addPointForm').classList.remove('hidden');
 }
@@ -528,7 +503,6 @@ function hideAddPointForm() {
     document.getElementById('newPointText').value = '';
 }
 
-// Add Point
 async function addPoint() {
     const text = document.getElementById('newPointText').value.trim();
     if (!text) return;
@@ -555,11 +529,9 @@ async function addPoint() {
     }
 }
 
-// Edit Point
 async function editPoint(pointId, currentText) {
     const newText = prompt('Edit point text:', currentText);
-    if (newText === null) return; // cancel
-    if (!newText || newText === currentText) return;
+    if (newText === null || !newText || newText === currentText) return;
 
     try {
         const response = await fetch(`${API_URL}/api/admin/points/${pointId}`, {
@@ -582,7 +554,6 @@ async function editPoint(pointId, currentText) {
     }
 }
 
-// Delete Point
 async function deletePoint(pointId) {
     if (!confirm('Are you sure you want to delete this point?')) return;
 
@@ -606,21 +577,18 @@ async function deletePoint(pointId) {
 // Load Admin Charts
 async function loadAdminCharts() {
     try {
-        const response = await fetch(`${API_URL}/api/admin/all-members`, {
-            headers: { 'Authorization': `Bearer ${currentUser?.id || ''}` }
-        });
+        const response = await fetch(`${API_URL}/api/members`);
         const data = await response.json();
 
-        const approvedMembers = data.members.filter(m => m.status === 'approved');
         const container = document.getElementById('adminChartsList');
 
-        if (approvedMembers.length === 0) {
-            container.innerHTML = '<div class="empty-state">No approved members yet</div>';
+        if (!data.members || data.members.length === 0) {
+            container.innerHTML = '<div class="empty-state">No members yet</div>';
             return;
         }
 
-        container.innerHTML = approvedMembers.map(member => `
-            <div class="member-card" onclick="openMemberChart(${member.id}, '${escapeHtml(member.name)}')" style="cursor: pointer;">
+        container.innerHTML = data.members.map(member => `
+            <div class="member-card" onclick="openMemberChart(${member.id}, '${escapeHtml(member.name).replace(/'/g, "\\'")}')" style="cursor: pointer;">
                 <h4>${escapeHtml(member.name)}</h4>
                 <p>BK Centre: ${escapeHtml(member.centre)}</p>
             </div>
@@ -645,11 +613,10 @@ async function showMemberTab(event, tab) {
     document.querySelectorAll('#memberDashboard .tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('#memberDashboard .tab-content').forEach(content => content.classList.remove('active'));
 
-    // Safe event
     if (event && event.target) {
         event.target.classList.add('active');
     } else {
-        document.querySelector(`#memberDashboard button[data-tab="${tab}"]`)?.classList.add('active');
+        document.querySelector(`#memberDashboard button[onclick*="${tab}"]`)?.classList.add('active');
     }
 
     document.getElementById(`${tab}Tab`).classList.add('active');
@@ -657,13 +624,14 @@ async function showMemberTab(event, tab) {
     if (tab === 'daily') {
         await loadDailyChecklist();
     } else if (tab === 'progress') {
+        currentPeriod = 'daily';
         await loadMyProgress();
     } else if (tab === 'allcharts') {
         await loadAllMembersCharts();
     }
 }
 
-// Load Daily Checklist
+// Load Daily Checklist - FIXED
 async function loadDailyChecklist() {
     try {
         const response = await fetch(`${API_URL}/api/points`);
@@ -672,11 +640,11 @@ async function loadDailyChecklist() {
 
         const today = new Date().toISOString().split('T')[0];
         const checkResponse = await fetch(`${API_URL}/api/members/${currentUser.id}/daily/${today}`);
-        const checkData = await checkResponse.json();  // FIXED: This now returns object {pointId: effort}
+        const checkData = await checkResponse.json();
 
         const container = document.getElementById('dailyCheckList');
         container.innerHTML = allPoints.map(point => {
-            const defaultValue = checkData[point.id] ?? 0; // FIXED: Get effort value for this point
+            const defaultValue = checkData[point.id] ?? 0;
             return `
                 <div class="check-item">
                     <input type="range"
@@ -698,14 +666,11 @@ async function loadDailyChecklist() {
     }
 }
 
-
 function updateSliderValue(slider, pointId) {
     const value = slider.value;
     const span = document.getElementById(`percent-${pointId}`);
     if (span) span.textContent = value + '%';
-    // document.getElementById(`slider-value-${pointId}`).textContent = value + '%';
 }
-
 
 // Update Daily Check
 async function updateDailyCheck(pointId, completed) {
@@ -726,7 +691,7 @@ async function loadMyProgress() {
     await loadProgressCharts(currentUser.id, 'progressCharts');
 }
 
-// Load Progress Charts
+// Load Progress Charts - FIXED
 async function loadProgressCharts(memberId, containerId) {
     try {
         const response = await fetch(`${API_URL}/api/members/${memberId}/progress/${currentPeriod}`);
@@ -757,7 +722,7 @@ async function loadProgressCharts(memberId, containerId) {
 // Show Period
 function showPeriod(period, event) {
     currentPeriod = period;
-    document.querySelectorAll('.period-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('#progressTab .period-btn').forEach(btn => btn.classList.remove('active'));
     if (event && event.target) event.target.classList.add('active');
     loadMyProgress();
 }
@@ -768,16 +733,16 @@ async function loadAllMembersCharts() {
         const response = await fetch(`${API_URL}/api/members`);
         const data = await response.json();
 
-        const approvedMembers = data.members.filter(m => m.status === 'approved' && m.id !== currentUser.id);
+        const otherMembers = data.members.filter(m => m.id !== currentUser.id);
         const container = document.getElementById('allMembersList');
 
-        if (approvedMembers.length === 0) {
+        if (otherMembers.length === 0) {
             container.innerHTML = '<div class="empty-state">No other members to display</div>';
             return;
         }
 
-        container.innerHTML = approvedMembers.map(member => `
-            <div class="member-card" onclick="openMemberChart(${member.id}, '${escapeHtml(member.name)}')" style="cursor: pointer;">
+        container.innerHTML = otherMembers.map(member => `
+            <div class="member-card" onclick="openMemberChart(${member.id}, '${escapeHtml(member.name).replace(/'/g, "\\'")}')" style="cursor: pointer;">
                 <h4>${escapeHtml(member.name)}</h4>
                 <p>BK Centre: ${escapeHtml(member.centre)}</p>
             </div>
@@ -828,9 +793,7 @@ function updateTodayDate() {
     document.getElementById('todayDate').textContent = today.toLocaleDateString('en-IN', options);
 }
 
-// ============ PASSWORD RESET FUNCTIONS ============
-
-// Admin Forgot Password
+// Password Reset Functions
 async function handleAdminForgotPassword(e) {
     if (e && e.preventDefault) e.preventDefault();
     const username = document.getElementById('adminForgotUsername').value.trim();
@@ -859,7 +822,7 @@ async function handleAdminForgotPassword(e) {
         }
 
         if (response.ok) {
-            showSuccess('adminForgotSuccess', 'Reset code sent to your email! Check iraisevaiyil@gmail.com');
+            showSuccess('adminForgotSuccess', 'Reset code sent to your email!');
             setTimeout(() => {
                 hideAllPages();
                 document.getElementById('adminResetPasswordPage').classList.add('active');
@@ -874,7 +837,6 @@ async function handleAdminForgotPassword(e) {
     }
 }
 
-// Admin Reset Password
 async function handleAdminResetPassword(e) {
     if (e && e.preventDefault) e.preventDefault();
     const code = document.getElementById('adminResetCode').value.trim();
@@ -927,7 +889,6 @@ async function handleAdminResetPassword(e) {
     }
 }
 
-// Member Forgot Password
 async function handleMemberForgotPassword(e) {
     if (e && e.preventDefault) e.preventDefault();
     const mobile = document.getElementById('memberForgotMobile').value.trim();
@@ -960,7 +921,7 @@ async function handleMemberForgotPassword(e) {
         }
 
         if (response.ok) {
-            showSuccess('memberForgotSuccess', 'Reset code sent to admin email (iraisevaiyil@gmail.com)! Admin will share the code with you.');
+            showSuccess('memberForgotSuccess', 'Reset code sent to admin email! Admin will share the code with you.');
             setTimeout(() => {
                 hideAllPages();
                 document.getElementById('memberResetPasswordPage').classList.add('active');
@@ -975,7 +936,6 @@ async function handleMemberForgotPassword(e) {
     }
 }
 
-// Member Reset Password
 async function handleMemberResetPassword(e) {
     if (e && e.preventDefault) e.preventDefault();
     const code = document.getElementById('memberResetCode').value.trim();
@@ -1028,7 +988,6 @@ async function handleMemberResetPassword(e) {
     }
 }
 
-// Utility to escape HTML in strings before injecting into DOM
 function escapeHtml(unsafe) {
     if (unsafe === null || unsafe === undefined) return '';
     return String(unsafe)
