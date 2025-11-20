@@ -124,13 +124,16 @@ body {
 
 .btn {
   border-radius: var(--radius-pill);
-  border: none;
+  border: 1.5px solid #f97316;
   font-size: 0.95rem;
   padding: 0.7rem 1.1rem;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 700;
+  background: #f97316;
+  color: #ffffff;
   transition: transform var(--transition-fast), box-shadow var(--transition-fast),
     background var(--transition-fast), color var(--transition-fast);
+  box-shadow: 0 10px 25px rgba(248, 113, 22, 0.6);
 }
 
 .btn.primary {
@@ -167,6 +170,34 @@ body {
 
 .btn.ghost:hover {
   background: rgba(30, 64, 175, 0.4);
+}
+
+.btn.small {
+  font-size: 0.8rem;
+  padding: 0.45rem 0.8rem;
+}
+
+.btn.full-width {
+  width: 100%;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 32px rgba(248, 113, 22, 0.8);
+}
+
+.btn:active {
+  transform: translateY(0);
+  box-shadow: 0 8px 18px rgba(248, 113, 22, 0.7);
+}
+
+/* All variants now behave the same, but we keep class names if used elsewhere */
+.btn.primary,
+.btn.outline,
+.btn.ghost {
+  background: #f97316;
+  color: #ffffff;
+  border-color: #f97316;
 }
 
 .btn.small {
@@ -333,17 +364,25 @@ select:focus {
 }
 
 .btn-icon {
-  border-radius: 999px;
-  border: 1px solid var(--border-subtle);
-  background: rgba(15, 23, 42, 0.9);
-  padding: 0.15rem 0.4rem;
-  font-size: 0.7rem;
+   border-radius: 999px;
+  border: 1.5px solid #f97316;
+  background: #f97316;
+  padding: 0.2rem 0.7rem;
+  font-size: 0.78rem;
   cursor: pointer;
+  color: #ffffff;
+  font-weight: 700;
 }
 
+.btn-icon:hover {
+  filter: brightness(1.05);
+}
+
+/* Red delete button */
 .btn-icon.danger {
-  border-color: rgba(248, 113, 113, 0.4);
-  color: #fecaca;
+  border-color: #dc2626;
+  background: #dc2626;
+  color: #ffffff;
 }
 
 /* Members list */
