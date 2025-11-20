@@ -76,12 +76,12 @@ function setupNavigation() {
     .getElementById("btn-student-register-landing")
     .addEventListener("click", () => showView("student-register"));
 
-  document
-    .getElementById("btn-public-charts-landing")
-    .addEventListener("click", () => {
-      showView("public-charts");
-      loadPublicMembers();
-    });
+  // document
+  //   .getElementById("btn-public-charts-landing")
+  //   .addEventListener("click", () => {
+  //     showView("public-charts");
+  //     loadPublicMembers();
+  //   });
 
   // Generic nav buttons
   document.querySelectorAll("[data-nav]").forEach((btn) => {
@@ -736,4 +736,20 @@ document.addEventListener("DOMContentLoaded", () => {
   setupPublicPeriodSwitch();
   setTodayToDateInput("daily-date");
   initFromLocalStorage();
+
+  // NEW: student button to view others' charts
+  const btnStudentPublic = document.getElementById("btn-student-public");
+  if (btnStudentPublic) {
+    btnStudentPublic.addEventListener("click", () => {
+      if (!currentMember && !currentAdmin) {
+        // Safety check – should not normally happen on student dashboard
+        showToast("Please login first.", { error: true });
+        showView("student-login");
+        return;
+      }
+      showView("public-charts");
+      loadPublicMembers();
+    });
+  }
+
 });
