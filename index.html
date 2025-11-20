@@ -1,195 +1,302 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Spiritual Chart — BK Trichy</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta charset="UTF-8" />
+  <title>Spiritual Daily Chart for BK - Trichy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
-  <div id="app">
-    <header class="topbar">
-      <div class="brand-row">
-        <a id="logoLink" href="#" title="Admin Login (click logo)">
-          <img id="logoImg" src="/baba.png" alt="Baba logo" />
-        </a>
-        <div class="brand-text">
-          <div class="brand-title">Spiritual Chart</div>
-          <div class="brand-sub">for BK - Trichy</div>
+  <div class="app-root">
+
+    <!-- Toast / notification -->
+    <div id="toast" class="toast hidden"></div>
+
+    <!-- ============ LANDING ============ -->
+    <section id="view-landing" class="view active">
+      <div class="landing-header">
+        <div id="logo-touch" class="logo-circle" title="Admin Login">
+          <span>
+            <img src="/baba.png" alt="Baba">
+          </span>
         </div>
-      </div>
-      <nav class="top-actions">
-        <button class="btn small" onclick="showLanding()">Home</button>
-        <button class="btn small" onclick="showMemberLogin()">Student Login</button>
-        <button class="btn small" onclick="showRegister()">Register</button>
-      </nav>
-    </header>
-
-    <main class="main">
-      <!-- LANDING -->
-      <section id="landingPage" class="page active center-card">
-        <div class="card landing-card">
-          <h1>Spiritual Chart</h1>
-          <p class="muted">A simple, focused tracker for spiritual practice — BK Trichy</p>
-          <div class="stack">
-            <button class="btn primary large" onclick="showMemberLogin()">Student Login</button>
-            <button class="btn outline large" onclick="showRegister()">Student Registration</button>
-          </div>
-          <p class="muted small">Logo links to Admin Login</p>
-        </div>
-      </section>
-
-      <!-- MEMBER REGISTER -->
-      <section id="registerPage" class="page">
-        <div class="card form-card">
-          <h2>Student Registration</h2>
-          <form id="registerForm" class="form-grid">
-            <label>Name<input id="regName" /></label>
-            <label>BK Centre<input id="regCentre" /></label>
-            <label>Mobile<input id="regMobile" inputmode="numeric" maxlength="10" /></label>
-            <label>Password<input id="regPassword" type="password" /></label>
-            <div class="row gap">
-              <button class="btn primary" type="submit">Register</button>
-              <button class="btn" type="button" onclick="showMemberLogin()">Back</button>
-            </div>
-            <div id="registerError" class="form-error"></div>
-            <div id="registerSuccess" class="form-success"></div>
-          </form>
-        </div>
-      </section>
-
-      <!-- MEMBER LOGIN -->
-      <section id="memberLoginPage" class="page">
-        <div class="card form-card">
-          <h2>Student Login</h2>
-          <form id="memberLoginForm" class="form-grid">
-            <label>Mobile<input id="memberMobile" inputmode="numeric" maxlength="10" /></label>
-            <label>Password<input id="memberPassword" type="password" /></label>
-            <div class="row gap">
-              <button class="btn primary" type="submit">Login</button>
-              <button class="btn" type="button" onclick="showRegister()">Register</button>
-            </div>
-            <div id="memberLoginError" class="form-error"></div>
-          </form>
-        </div>
-      </section>
-
-      <!-- ADMIN LOGIN (and will be opened when logo clicked) -->
-      <section id="adminLoginPage" class="page">
-        <div class="card form-card">
-          <h2>Admin Login</h2>
-          <form id="adminLoginForm" class="form-grid">
-            <label>Username<input id="adminUsername" /></label>
-            <label>Password<input id="adminPassword" type="password" /></label>
-            <div class="row gap">
-              <button class="btn primary" type="submit">Login</button>
-              <button class="btn" type="button" onclick="showLanding()">Back</button>
-            </div>
-            <div id="adminLoginError" class="form-error"></div>
-          </form>
-        </div>
-      </section>
-
-      <!-- MEMBER DASHBOARD -->
-      <section id="memberDashboard" class="page dashboard">
-        <div class="card dashboard-card">
-          <div class="dash-top row between">
-            <div>
-              <h3 id="memberName">Welcome</h3>
-              <div id="todayDate" class="muted small"></div>
-            </div>
-            <div class="row gap">
-              <button class="btn" onclick="logout()">Logout</button>
-            </div>
-          </div>
-
-          <div class="tabs row gap">
-            <button class="tab-btn active" onclick="showMemberTab(event,'daily')">Daily</button>
-            <button class="tab-btn" onclick="showMemberTab(event,'progress')">Progress</button>
-            <button class="tab-btn" onclick="showMemberTab(event,'others')">Other Members</button>
-          </div>
-
-          <div id="dailyTab" class="tab-content active">
-            <div id="dailyCheckList" class="stack"></div>
-            <div style="text-align:center; margin-top:12px">
-              <button class="btn primary" onclick="saveDailyChecks()">💾 Save All</button>
-              <div id="dailySaveMsg" class="form-success"></div>
-            </div>
-          </div>
-
-          <div id="progressTab" class="tab-content">
-            <div class="row gap wrap">
-              <button class="btn period-btn active" onclick="showPeriod('daily',event)">Daily</button>
-              <button class="btn period-btn" onclick="showPeriod('weekly',event)">Weekly</button>
-              <button class="btn period-btn" onclick="showPeriod('monthly',event)">Monthly</button>
-              <button class="btn period-btn" onclick="showPeriod('yearly',event)">Yearly</button>
-            </div>
-            <div id="progressCharts" class="stack" style="margin-top:12px"></div>
-          </div>
-
-          <div id="othersTab" class="tab-content">
-            <div id="allMembersList" class="list-grid"></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ADMIN DASHBOARD -->
-      <section id="adminDashboard" class="page dashboard">
-        <div class="card dashboard-card">
-          <div class="dash-top row between">
-            <h3>Admin Dashboard</h3>
-            <div class="row gap">
-              <button class="btn" onclick="logout()">Logout</button>
-            </div>
-          </div>
-
-          <div class="tabs row gap">
-            <button class="tab-btn active" onclick="showAdminTab(event,'members')">All Members</button>
-            <button class="tab-btn" onclick="showAdminTab(event,'points')">Chart Points</button>
-          </div>
-
-          <div id="membersTab" class="tab-content active">
-            <div id="membersList" class="list-grid"></div>
-          </div>
-
-          <div id="pointsTab" class="tab-content">
-            <div class="row between">
-              <h4>Points</h4>
-              <div><button class="btn" onclick="showAddPoint()">+ Add Point</button></div>
-            </div>
-            <div id="pointsList" class="list-grid" style="margin-top:10px"></div>
-
-            <div id="addPointForm" class="card small hidden" style="margin-top:12px">
-              <label>Point text<input id="newPointText" /></label>
-              <div class="row gap" style="margin-top:8px">
-                <button class="btn primary" onclick="addPoint()">Add</button>
-                <button class="btn" onclick="hideAddPoint()">Cancel</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Chart Modal -->
-      <div id="chartModal" class="modal">
-        <div class="modal-content">
-          <button class="modal-close" onclick="closeChartModal()">✕</button>
-          <h3 id="chartMemberName">Member</h3>
-          <div class="row gap wrap" style="margin-top:8px">
-            <button class="btn period-btn active" onclick="showModalPeriod('daily',event)">Daily</button>
-            <button class="btn period-btn" onclick="showModalPeriod('weekly',event)">Weekly</button>
-            <button class="btn period-btn" onclick="showModalPeriod('monthly',event)">Monthly</button>
-            <button class="btn period-btn" onclick="showModalPeriod('yearly',event)">Yearly</button>
-          </div>
-          <div id="modalCharts" class="stack" style="margin-top:10px"></div>
-        </div>
+        <h1 class="app-title">Spiritual Daily Chart for BK - Trichy</h1>
+        <p class="app-subtitle">
+          Gently track your daily spiritual efforts and grow in Baba's remembrance.
+        </p>
       </div>
 
-    </main>
+      <div class="landing-actions">
+        <button id="btn-student-login-landing" class="btn primary">
+          Student Login
+        </button>
+        <button id="btn-student-register-landing" class="btn outline">
+          Student Registration
+        </button>
+        <button id="btn-public-charts-landing" class="btn ghost">
+          View Other Charts (Public)
+        </button>
+      </div>
 
-    <footer class="footer muted">BK Trichy • Spiritual Chart</footer>
+      <footer class="footer">
+        <h3>Key Notes for Maintaining Daily Chart</h3>
+        <ul>
+          <li>Fill your chart honestly, with love for self-progress.</li>
+          <li>Review your weekly and monthly averages with Baba in remembrance.</li>
+          <li>Use the chart to gently improve, not to judge yourself or others.</li>
+        </ul>
+      </footer>
+    </section>
+
+    <!-- ============ ADMIN LOGIN ============ -->
+    <section id="view-admin-login" class="view">
+      <header class="top-bar">
+        <button class="link-button" data-nav="landing">← Back</button>
+        <h2>Admin Login</h2>
+      </header>
+      <div class="card">
+        <form id="admin-login-form" class="form">
+          <div class="form-group">
+            <label for="admin-username">User ID</label>
+            <input
+              id="admin-username"
+              type="text"
+              autocomplete="username"
+              value="AmeerMushak"
+            />
+          </div>
+          <div class="form-group">
+            <label for="admin-password">Password</label>
+            <div class="password-wrapper">
+              <input
+                id="admin-password"
+                type="password"
+                autocomplete="current-password"
+                value="Trichy@123"
+              />
+              <button type="button" class="show-password-toggle" data-target="admin-password">
+                Show
+              </button>
+            </div>
+          </div>
+          <button type="submit" class="btn primary full-width">
+            Login as Admin
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- ============ STUDENT LOGIN ============ -->
+    <section id="view-student-login" class="view">
+      <header class="top-bar">
+        <button class="link-button" data-nav="landing">← Back</button>
+        <h2>Student Login</h2>
+      </header>
+      <div class="card">
+        <form id="student-login-form" class="form">
+          <div class="form-group">
+            <label for="student-mobile-login">Mobile Number</label>
+            <input
+              id="student-mobile-login"
+              type="tel"
+              autocomplete="tel"
+              placeholder="10-digit mobile number"
+            />
+          </div>
+          <div class="form-group">
+            <label for="student-password-login">Password</label>
+            <div class="password-wrapper">
+              <input
+                id="student-password-login"
+                type="password"
+                autocomplete="current-password"
+              />
+              <button type="button" class="show-password-toggle" data-target="student-password-login">
+                Show
+              </button>
+            </div>
+          </div>
+          <button type="submit" class="btn primary full-width">
+            Login
+          </button>
+        </form>
+      </div>
+      <p class="center small-text">
+        New student?
+        <button class="link-button" data-nav="student-register">
+          Register here
+        </button>
+      </p>
+    </section>
+
+    <!-- ============ STUDENT REGISTRATION ============ -->
+    <section id="view-student-register" class="view">
+      <header class="top-bar">
+        <button class="link-button" data-nav="landing">← Back</button>
+        <h2>Student Registration</h2>
+      </header>
+      <div class="card">
+        <form id="student-register-form" class="form">
+          <div class="form-group">
+            <label for="student-name">Name</label>
+            <input id="student-name" type="text" />
+          </div>
+          <div class="form-group">
+            <label for="student-centre">Centre Name</label>
+            <input id="student-centre" type="text" />
+          </div>
+          <div class="form-group">
+            <label for="student-mobile">Mobile Number</label>
+            <input id="student-mobile" type="tel" placeholder="10-digit mobile number" />
+          </div>
+          <div class="form-group">
+            <label for="student-password">Password</label>
+            <div class="password-wrapper">
+              <input id="student-password" type="password" />
+              <button type="button" class="show-password-toggle" data-target="student-password">
+                Show
+              </button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="student-password-confirm">Confirm Password</label>
+            <div class="password-wrapper">
+              <input id="student-password-confirm" type="password" />
+              <button type="button" class="show-password-toggle" data-target="student-password-confirm">
+                Show
+              </button>
+            </div>
+          </div>
+          <button type="submit" class="btn primary full-width">
+            Register
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- ============ ADMIN DASHBOARD ============ -->
+    <section id="view-admin-dashboard" class="view">
+      <header class="top-bar">
+        <button class="link-button" data-nav="landing" id="admin-logout-btn">
+          ← Logout
+        </button>
+        <h2>Admin Dashboard</h2>
+      </header>
+
+      <div class="admin-info">
+        Logged in as <span id="admin-username-display"></span>
+      </div>
+
+      <div class="tabs">
+        <button class="tab-button active" data-admin-tab="points">Manage Points</button>
+        <button class="tab-button" data-admin-tab="members">Registered Students</button>
+        <button class="tab-button" data-admin-tab="public">Public Charts</button>
+      </div>
+
+      <!-- Points management -->
+      <div id="admin-tab-points" class="tab-panel active">
+        <div class="card">
+          <h3>Chart Points (Questions)</h3>
+          <p class="small-text">
+            You can edit existing points, delete them, or add new points.
+          </p>
+          <div id="points-list"></div>
+          <hr />
+          <h4>Add New Point</h4>
+          <div class="form-inline">
+            <input id="new-point-text" type="text" placeholder="Enter new point text" />
+            <button id="add-point-btn" class="btn primary small">Add</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Members management -->
+      <div id="admin-tab-members" class="tab-panel">
+        <div class="card">
+          <h3>Registered Students</h3>
+          <div id="members-list"></div>
+        </div>
+      </div>
+
+      <!-- Public charts (admin view, same as public view) -->
+      <div id="admin-tab-public" class="tab-panel">
+        <div class="card">
+          <h3>View Students' Charts</h3>
+          <p class="small-text">
+            Select a student and period to see their average progress.
+          </p>
+          <div id="admin-public-wrapper"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ STUDENT DASHBOARD ============ -->
+    <section id="view-student-dashboard" class="view">
+      <header class="top-bar">
+        <button class="link-button" id="student-logout-btn" data-nav="landing">
+          ← Logout
+        </button>
+        <h2>My Daily Chart</h2>
+      </header>
+
+      <div class="card">
+        <div id="student-welcome" class="student-welcome"></div>
+
+        <div class="date-row">
+          <label for="daily-date">Select Date</label>
+          <input id="daily-date" type="date" />
+          <button id="daily-load-btn" class="btn ghost small">Load</button>
+        </div>
+
+        <h3>Today's Efforts</h3>
+        <p class="small-text">
+          Slide the bar for each point (0–100%). Then tap "Save Today's Marks".
+        </p>
+        <div id="student-points-input"></div>
+
+        <button id="save-daily-btn" class="btn primary full-width">
+          Save Today's Marks
+        </button>
+      </div>
+
+      <div class="card">
+        <h3>My Averages</h3>
+        <div class="period-switch">
+          <button class="chip active" data-period="daily">Daily</button>
+          <button class="chip" data-period="weekly">Weekly</button>
+          <button class="chip" data-period="monthly">Monthly</button>
+          <button class="chip" data-period="yearly">Yearly</button>
+        </div>
+        <div id="student-progress-list"></div>
+      </div>
+    </section>
+
+    <!-- ============ PUBLIC CHARTS (EVERYONE) ============ -->
+    <section id="view-public-charts" class="view">
+      <header class="top-bar">
+        <button class="link-button" data-nav="landing">← Back</button>
+        <h2>Students' Charts (Public)</h2>
+      </header>
+      <div class="card">
+        <p class="small-text">
+          Anyone can see every student's average chart here. Names and centres are shown.
+        </p>
+        <div id="public-members-list"></div>
+
+        <div class="public-chart-section">
+          <h3 id="public-selected-title" class="hidden"></h3>
+          <div class="period-switch" id="public-period-switch">
+            <button class="chip active" data-public-period="daily">Daily</button>
+            <button class="chip" data-public-period="weekly">Weekly</button>
+            <button class="chip" data-public-period="monthly">Monthly</button>
+            <button class="chip" data-public-period="yearly">Yearly</button>
+          </div>
+          <div id="public-progress-list"></div>
+        </div>
+      </div>
+    </section>
   </div>
 
-  <script src="app.js"></script>
+  <script src="./app.js"></script>
 </body>
 </html>

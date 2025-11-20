@@ -1,312 +1,739 @@
-// app.js — Dark Blue UI. Connects to backend at API_URL below.
-const API_URL = 'https://bk-spiritual-backend.onrender.com';
+// ====== CONFIG ======
+const API_BASE = "https://bk-spiritual-backend.onrender.com"; // <-- change this to your Render backend URL
 
-let currentUser = null;
-let allPoints = [];
-let dailyCheckData = {};
-let currentPeriod = 'daily';
-let modalMemberId = null;
+// ====== GLOBAL STATE ======
+let points = [];
+let currentAdmin = null;
+let currentMember = null;
+let publicSelectedMemberId = null;
 
-// small DOM helpers
-const $ = id => document.getElementById(id);
-function esc(s){ if (s===null||s===undefined) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-// startup
-document.addEventListener('DOMContentLoaded', () => {
-  attachLogoLink();
-  attachForms();
-  checkAuth();
-  updateTodayDate();
-  // ensure logo -> admin login
-  function attachLogoLink(){ const logo = $('logoLink'); if (!logo) return; logo.addEventListener('click',(e)=>{ e.preventDefault(); showAdminLogin(); }); }
-});
-
-function attachForms(){
-  const r = $('registerForm'); if (r) r.addEventListener('submit', handleRegister);
-  const ml = $('memberLoginForm'); if (ml) ml.addEventListener('submit', handleMemberLogin);
-  const al = $('adminLoginForm'); if (al) al.addEventListener('submit', handleAdminLogin);
+// ====== UTILITIES ======
+function showView(id) {
+  document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
+  const el = document.getElementById(`view-${id}`) || document.getElementById(id);
+  if (el) el.classList.add("active");
 }
 
-// navigation helpers
-function hideAllPages(){ document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); }
-function showLanding(){ hideAllPages(); $('landingPage').classList.add('active'); }
-function showRegister(){ hideAllPages(); $('registerPage').classList.add('active'); }
-function showMemberLogin(){ hideAllPages(); $('memberLoginPage').classList.add('active'); }
-function showAdminLogin(){ hideAllPages(); $('adminLoginPage').classList.add('active'); }
-function showMemberDashboard(){ hideAllPages(); $('memberDashboard').classList.add('active'); }
-function showAdminDashboard(){ hideAllPages(); $('adminDashboard').classList.add('active'); }
+function showToast(message, { error = false } = {}) {
+  const t = document.getElementById("toast");
+  t.textContent = message;
+  t.classList.remove("hidden", "error");
+  if (error) t.classList.add("error");
 
-// auth
-function checkAuth(){
-  const raw = localStorage.getItem('currentUser');
-  if (!raw) return showLanding();
+  setTimeout(() => {
+    t.classList.add("hidden");
+  }, 2800);
+}
+
+async function api(path, options = {}) {
+  const opts = {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
+    },
+    credentials: "include",
+    ...options,
+  };
+  if (options.body && typeof options.body !== "string") {
+    opts.body = JSON.stringify(options.body);
+  }
+  const res = await fetch(`${API_BASE}${path}`, opts);
+  let data = null;
   try {
-    currentUser = JSON.parse(raw);
-    if (currentUser.role === 'admin') {
-      showAdminDashboard();
-      loadAllMembers();
-      loadPoints();
-    } else {
-      showMemberDashboard();
-      document.getElementById('memberName').textContent = `Welcome, ${currentUser.name || currentUser.mobile}`;
-      showMemberTab(null,'daily');
-      loadDailyChecklist();
-    }
-  } catch(e){ console.warn('auth read failed', e); showLanding(); }
+    data = await res.json();
+  } catch (_) {
+    // ignore
+  }
+  if (!res.ok) {
+    const msg = (data && data.message) || `Error ${res.status}`;
+    throw new Error(msg);
+  }
+  return data;
 }
 
-function logout(){
-  localStorage.removeItem('currentUser');
-  currentUser = null;
-  showLanding();
-}
-
-// update date
-function updateTodayDate(){
-  const el = $('todayDate');
-  if (!el) return;
+function setTodayToDateInput(id) {
+  const inp = document.getElementById(id);
+  if (!inp) return;
   const d = new Date();
-  el.textContent = d.toLocaleDateString('en-IN', { year:'numeric', month:'long', day:'numeric' });
+  const pad = (n) => (n < 10 ? "0" + n : n);
+  const s = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  inp.value = s;
 }
 
-// ---------------- Registration / Login ----------------
-async function handleRegister(e){
-  e.preventDefault();
-  const name = $('regName').value.trim();
-  const centre = $('regCentre').value.trim();
-  const mobile = $('regMobile').value.trim();
-  const password = $('regPassword').value;
-  if (!name || !centre || !mobile || !password) return showError('registerError','Please fill all fields');
-  try {
-    const res = await fetch(`${API_URL}/api/members/register`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ name, centre, mobile, password }) });
-    const data = await res.json();
-    if (!res.ok) return showError('registerError', data.message || 'Registration failed');
-    $('registerForm').reset();
-    showSuccess('registerSuccess','Registered — please login');
-    setTimeout(()=>showMemberLogin(), 1200);
-  } catch(err){ console.error('register err', err); showError('registerError','Connection error'); }
+// ====== VIEWS NAVIGATION SETUP ======
+function setupNavigation() {
+  // From landing
+  document
+    .getElementById("logo-touch")
+    .addEventListener("click", () => showView("admin-login"));
+
+  document
+    .getElementById("btn-student-login-landing")
+    .addEventListener("click", () => showView("student-login"));
+
+  document
+    .getElementById("btn-student-register-landing")
+    .addEventListener("click", () => showView("student-register"));
+
+  document
+    .getElementById("btn-public-charts-landing")
+    .addEventListener("click", () => {
+      showView("public-charts");
+      loadPublicMembers();
+    });
+
+  // Generic nav buttons
+  document.querySelectorAll("[data-nav]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const target = btn.getAttribute("data-nav");
+      showView(target);
+      if (target === "public-charts") {
+        loadPublicMembers();
+      }
+    });
+  });
 }
 
-async function handleMemberLogin(e){
-  e.preventDefault();
-  const mobile = $('memberMobile').value.trim();
-  const password = $('memberPassword').value;
-  if (!mobile || !password) return showError('memberLoginError','Enter mobile and password');
-  try {
-    const res = await fetch(`${API_URL}/api/members/login`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ mobile, password }) });
-    const data = await res.json();
-    if (!res.ok) return showError('memberLoginError', data.message || 'Login failed');
-    currentUser = { ...data.member, role:'member' };
-    localStorage.setItem('currentUser', JSON.stringify(currentUser));
-    showMemberDashboard();
-    document.getElementById('memberName').textContent = `Welcome, ${currentUser.name || currentUser.mobile}`;
-    showMemberTab(null,'daily');
-    await loadDailyChecklist();
-  } catch(err){ console.error('member login', err); showError('memberLoginError','Connection error'); }
+// ====== SHOW / HIDE PASSWORD ======
+function setupPasswordToggles() {
+  document.querySelectorAll(".show-password-toggle").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const targetId = btn.getAttribute("data-target");
+      const input = document.getElementById(targetId);
+      if (!input) return;
+      if (input.type === "password") {
+        input.type = "text";
+        btn.textContent = "Hide";
+      } else {
+        input.type = "password";
+        btn.textContent = "Show";
+      }
+    });
+  });
 }
 
-async function handleAdminLogin(e){
-  e.preventDefault();
-  const username = $('adminUsername').value.trim();
-  const password = $('adminPassword').value;
-  if (!username || !password) return showError('adminLoginError','Enter username and password');
-  try {
-    const res = await fetch(`${API_URL}/api/admin/login`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ username, password })});
-    const data = await res.json();
-    if (!res.ok) return showError('adminLoginError', data.message || 'Login failed');
-    currentUser = { ...data.admin, role:'admin' };
-    localStorage.setItem('currentUser', JSON.stringify(currentUser));
-    showAdminDashboard();
-    await loadAllMembers();
-    await loadPoints();
-  } catch(err){ console.error('admin login', err); showError('adminLoginError','Connection error'); }
-}
-
-// ---------------- Admin: Members & Points ----------------
-async function loadAllMembers(){
-  try {
-    const res = await fetch(`${API_URL}/api/admin/all-members`);
-    const data = await res.json();
-    const container = $('membersList');
-    if (!data.members || data.members.length===0){ container.innerHTML = '<div class="empty-state">No members</div>'; return; }
-    container.innerHTML = data.members.map(m => {
-      const nm = esc(m.name); const centre = esc(m.centre || '');
-      return `<div class="member-card"><h4>${nm}</h4><div class="muted small">${centre}</div><div class="row gap" style="margin-top:8px"><button class="btn small" onclick="openMemberChart(${m.id},'${nm}')">View Chart</button><button class="btn small" onclick="deleteMember(${m.id})">Delete</button></div></div>`;
-    }).join('');
-  } catch(err){ console.error('loadAllMembers', err); $('membersList').innerHTML = '<div class="empty-state">Failed to load</div>'; }
-}
-
-async function deleteMember(id){
-  if (!confirm('Delete this member?')) return;
-  try {
-    const res = await fetch(`${API_URL}/api/admin/delete-member/${id}`, { method:'DELETE' });
-    if (!res.ok) return alert('Delete failed');
-    await loadAllMembers();
-  } catch(err){ console.error('deleteMember', err); alert('Error'); }
-}
-
-// Points (admin)
-async function loadPoints(){
-  try {
-    const res = await fetch(`${API_URL}/api/points`);
-    const data = await res.json();
-    allPoints = data.points || [];
-    const container = $('pointsList');
-    if (!allPoints || allPoints.length===0){ container.innerHTML = '<div class="empty-state">No points</div>'; return; }
-    container.innerHTML = allPoints.map(p => {
-      const t = esc(p.text);
-      return `<div class="point-card"><div>${t}</div><div class="muted small" style="margin-top:8px">Order: ${p.order_num || p.id}</div><div class="row gap" style="margin-top:8px"><button class="btn small" onclick="promptEditPoint(${p.id})">Edit</button><button class="btn small" onclick="deletePoint(${p.id})">Delete</button></div></div>`;
-    }).join('');
-  } catch(err){ console.error('loadPoints', err); $('pointsList').innerHTML = '<div class="empty-state">Failed to load</div>'; }
-}
-
-function showAddPoint(){ $('addPointForm').classList.remove('hidden'); }
-function hideAddPoint(){ $('addPointForm').classList.add('hidden'); $('newPointText').value=''; }
-
-async function addPoint(){
-  const text = $('newPointText').value.trim();
-  if (!text) return alert('Enter text');
-  try {
-    const res = await fetch(`${API_URL}/api/admin/points`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ text })});
-    if (!res.ok) return alert('Add failed');
-    hideAddPoint();
-    await loadPoints();
-  } catch(err){ console.error('addPoint', err); alert('Error'); }
-}
-
-function promptEditPoint(id){
-  const p = allPoints.find(x=>x.id===id);
-  if (!p) return alert('Point not found');
-  const newText = prompt('Edit point text', p.text);
-  if (!newText || newText===p.text) return;
-  fetch(`${API_URL}/api/admin/points/${id}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ text:newText })})
-    .then(r=>{ if (!r.ok) alert('Update failed'); else loadPoints(); })
-    .catch(e=>console.error('editPoint', e));
-}
-
-function deletePoint(id){
-  if (!confirm('Delete point?')) return;
-  fetch(`${API_URL}/api/admin/points/${id}`, { method:'DELETE' })
-    .then(r=>{ if (!r.ok) alert('Delete failed'); else loadPoints(); })
-    .catch(e=>console.error('deletePoint', e));
-}
-
-// ---------------- Member: Daily / Save / Progress ----------------
-async function loadDailyChecklist(){
-  try {
-    const ptsRes = await fetch(`${API_URL}/api/points`);
-    const pts = await ptsRes.json();
-    allPoints = pts.points || [];
-    const today = new Date().toISOString().split('T')[0];
-    const recRes = await fetch(`${API_URL}/api/members/${currentUser.id}/daily/${today}`);
-    const rec = await recRes.json();
-    dailyCheckData = rec || {};
-    const container = $('dailyCheckList');
-    if (!allPoints || allPoints.length===0){ container.innerHTML = '<div class="empty-state">No points defined</div>'; return; }
-    container.innerHTML = allPoints.map(p => {
-      const val = Number(dailyCheckData[p.id] !== undefined ? dailyCheckData[p.id] : 0);
-      const id = p.id;
-      return `<div class="check-item"><input class="slider" type="range" min="0" max="100" value="${val}" data-point-id="${id}" oninput="onSliderInput(event)"><div class="percent-label" id="percent-${id}">${val}%</div><div style="flex:1"><strong style="display:block; margin-bottom:6px">${esc(p.text)}</strong></div></div>`;
-    }).join('');
-  } catch(err){ console.error('loadDailyChecklist', err); $('dailyCheckList').innerHTML = '<div class="empty-state">Failed to load</div>'; }
-}
-
-function onSliderInput(e){
-  const el = e.target;
-  const id = el.dataset.pointId;
-  const v = parseInt(el.value,10) || 0;
-  const sp = $('percent-'+id); if (sp) sp.textContent = v + '%';
-  dailyCheckData[id] = v;
-}
-
-async function saveDailyChecks(){
-  try {
-    const today = new Date().toISOString().split('T')[0];
-    for (const p of allPoints) {
-      const pointId = p.id;
-      const completed = Number(dailyCheckData[pointId] !== undefined ? dailyCheckData[pointId] : 0);
-      await fetch(`${API_URL}/api/members/${currentUser.id}/daily`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ date: today, pointId, completed }) });
+// ====== ADMIN LOGIN ======
+function setupAdminLogin() {
+  const form = document.getElementById("admin-login-form");
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const username = document.getElementById("admin-username").value.trim();
+    const password = document.getElementById("admin-password").value.trim();
+    if (!username || !password) {
+      showToast("Please fill both fields.", { error: true });
+      return;
     }
-    $('dailySaveMsg').textContent = 'Saved';
-    setTimeout(()=> $('dailySaveMsg').textContent = '', 2000);
-    await loadMyProgress();
-  } catch(err){ console.error('saveDailyChecks', err); alert('Save failed'); }
+    try {
+      const data = await api("/api/admin/login", {
+        method: "POST",
+        body: { username, password },
+      });
+      currentAdmin = data.admin;
+      localStorage.setItem("admin", JSON.stringify(currentAdmin));
+      document.getElementById("admin-username-display").textContent =
+        currentAdmin.username;
+      await refreshAdminData();
+      showView("admin-dashboard");
+      showToast("Admin login successful.");
+    } catch (err) {
+      showToast(err.message || "Admin login failed.", { error: true });
+    }
+  });
+
+  document
+    .getElementById("admin-logout-btn")
+    .addEventListener("click", () => {
+      currentAdmin = null;
+      localStorage.removeItem("admin");
+      showToast("Admin logged out.");
+      showView("landing");
+    });
 }
 
-// Progress (member + modal)
-async function loadMyProgress(){ await loadProgressCharts(currentUser.id, 'progressCharts'); }
+// ====== STUDENT LOGIN / REGISTER ======
+function setupStudentAuth() {
+  // Login
+  const loginForm = document.getElementById("student-login-form");
+  loginForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const mobile = document
+      .getElementById("student-mobile-login")
+      .value.trim();
+    const password = document
+      .getElementById("student-password-login")
+      .value.trim();
+    if (!mobile || !password) {
+      showToast("Please fill both fields.", { error: true });
+      return;
+    }
+    try {
+      const data = await api("/api/members/login", {
+        method: "POST",
+        body: { mobile, password },
+      });
+      currentMember = data.member;
+      localStorage.setItem("member", JSON.stringify(currentMember));
+      await loadPointsIfNeeded();
+      setupStudentDashboardAfterLogin();
+      showView("student-dashboard");
+      showToast("Login successful.");
+    } catch (err) {
+      showToast(err.message || "Login failed.", { error: true });
+    }
+  });
 
-async function loadProgressCharts(memberId, containerId){
+  // Registration
+  const regForm = document.getElementById("student-register-form");
+  regForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const name = document.getElementById("student-name").value.trim();
+    const centre = document.getElementById("student-centre").value.trim();
+    const mobile = document.getElementById("student-mobile").value.trim();
+    const password = document.getElementById("student-password").value.trim();
+    const confirm = document
+      .getElementById("student-password-confirm")
+      .value.trim();
+
+    if (!name || !centre || !mobile || !password || !confirm) {
+      showToast("Please fill all fields.", { error: true });
+      return;
+    }
+    if (password !== confirm) {
+      showToast("Passwords do not match.", { error: true });
+      return;
+    }
+
+    try {
+      await api("/api/members/register", {
+        method: "POST",
+        body: { name, centre, mobile, password },
+      });
+      showToast("Registration successful. Please login.");
+      showView("student-login");
+    } catch (err) {
+      showToast(err.message || "Registration error.", { error: true });
+    }
+  });
+
+  // Logout
+  document
+    .getElementById("student-logout-btn")
+    .addEventListener("click", () => {
+      currentMember = null;
+      localStorage.removeItem("member");
+      showToast("Logged out.");
+      showView("landing");
+    });
+}
+
+// ====== LOAD POINTS ======
+async function loadPointsIfNeeded() {
+  if (points.length > 0) return;
   try {
-    const res = await fetch(`${API_URL}/api/members/${memberId}/progress/${currentPeriod}`);
-    const data = await res.json();
-    const container = document.getElementById(containerId);
-    if (!data.progress || data.progress.length===0){ container.innerHTML = '<div class="empty-state">No data</div>'; return; }
-    container.innerHTML = data.progress.map(item => {
-      const p = Math.round(Number(item.percentage) || 0);
-      const cls = p <= 33 ? 'red' : p <= 66 ? 'orange' : 'green';
-      return `<div class="chart-item"><div style="margin-bottom:6px"><strong>${esc(item.text)}</strong></div><div class="progress-bar-container"><div class="progress-bar ${cls}" style="width:${p}%">${p}%</div></div></div>`;
-    }).join('');
-  } catch(err){ console.error('loadProgressCharts', err); if (document.getElementById(containerId)) document.getElementById(containerId).innerHTML = '<div class="empty-state">Failed</div>'; }
+    const data = await api("/api/debug/points");
+    points = data.points || [];
+  } catch (err) {
+    console.error(err);
+    showToast("Unable to load points.", { error: true });
+  }
 }
 
-function showPeriod(period, e){
-  currentPeriod = period;
-  document.querySelectorAll('#progressTab .period-btn').forEach(b => b.classList.remove('active'));
-  if (e && e.target) e.target.classList.add('active');
-  loadMyProgress();
+// ====== ADMIN: MANAGE POINTS ======
+function setupAdminPointsUI() {
+  document
+    .getElementById("add-point-btn")
+    .addEventListener("click", async () => {
+      const input = document.getElementById("new-point-text");
+      const text = input.value.trim();
+      if (!text) {
+        showToast("Point text is empty.", { error: true });
+        return;
+      }
+      try {
+        const res = await api("/api/admin/points", {
+          method: "POST",
+          body: { text },
+        });
+        points.push(res.point);
+        renderAdminPoints();
+        input.value = "";
+        showToast("Point added.");
+      } catch (err) {
+        showToast(err.message || "Error adding point.", { error: true });
+      }
+    });
 }
 
-// Other members (member view) + modal
-async function loadAllMembers(){
+function renderAdminPoints() {
+  const container = document.getElementById("points-list");
+  container.innerHTML = "";
+  if (!points || points.length === 0) {
+    container.textContent = "No points defined.";
+    return;
+  }
+
+  points.forEach((p) => {
+    const row = document.createElement("div");
+    row.className = "point-row";
+
+    const textarea = document.createElement("textarea");
+    textarea.value = p.text;
+    textarea.dataset.pointId = p.id;
+
+    const actions = document.createElement("div");
+    actions.className = "point-actions";
+
+    const btnSave = document.createElement("button");
+    btnSave.className = "btn-icon";
+    btnSave.textContent = "Save";
+    btnSave.addEventListener("click", async () => {
+      const newText = textarea.value.trim();
+      if (!newText) {
+        showToast("Point cannot be empty.", { error: true });
+        return;
+      }
+      try {
+        await api(`/api/admin/points/${p.id}`, {
+          method: "PUT",
+          body: { text: newText },
+        });
+        p.text = newText;
+        showToast("Point updated.");
+      } catch (err) {
+        showToast(err.message || "Error updating.", { error: true });
+      }
+    });
+
+    const btnDelete = document.createElement("button");
+    btnDelete.className = "btn-icon danger";
+    btnDelete.textContent = "Del";
+    btnDelete.addEventListener("click", async () => {
+      if (!confirm("Delete this point?")) return;
+      try {
+        await api(`/api/admin/points/${p.id}`, { method: "DELETE" });
+        points = points.filter((pt) => pt.id !== p.id);
+        renderAdminPoints();
+        showToast("Point deleted.");
+      } catch (err) {
+        showToast(err.message || "Error deleting.", { error: true });
+      }
+    });
+
+    actions.appendChild(btnSave);
+    actions.appendChild(btnDelete);
+    row.appendChild(textarea);
+    row.appendChild(actions);
+    container.appendChild(row);
+  });
+}
+
+// ====== ADMIN: MEMBERS LIST ======
+async function loadMembersList() {
   try {
-    const res = await fetch(`${API_URL}/api/members`);
-    const data = await res.json();
-    const container = $('allMembersList');
-    if (!data.members || data.members.length === 0) { container.innerHTML = '<div class="empty-state">No other members</div>'; return; }
-    // show everyone except current user
-    const others = data.members.filter(m => m.id !== currentUser.id);
-    container.innerHTML = others.map(m => `<div class="member-card" onclick="openMemberChart(${m.id},'${esc(m.name)}')"><h4>${esc(m.name)}</h4><div class="muted small">${esc(m.centre)}</div></div>`).join('');
-  } catch(err){ console.error('loadAllMembers', err); $('allMembersList').innerHTML = '<div class="empty-state">Failed</div>'; }
+    const data = await api("/api/admin/all-members");
+    const members = data.members || [];
+    const container = document.getElementById("members-list");
+    if (members.length === 0) {
+      container.textContent = "No students registered yet.";
+      return;
+    }
+    const table = document.createElement("table");
+    table.className = "members-table";
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Centre</th>
+          <th>Mobile</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    `;
+    const tbody = table.querySelector("tbody");
+
+    members.forEach((m) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${m.name || "-"}</td>
+        <td>${m.centre || "-"}</td>
+        <td>${m.mobile}</td>
+        <td></td>
+      `;
+      const actionsCell = tr.querySelector("td:last-child");
+
+      const viewBtn = document.createElement("button");
+      viewBtn.className = "btn-icon";
+      viewBtn.textContent = "Chart";
+      viewBtn.addEventListener("click", () => {
+        // re-use public wrapper for admin view
+        const wrapper = document.getElementById("admin-public-wrapper");
+        wrapper.innerHTML = "";
+        const title = document.createElement("h4");
+        title.textContent = `Chart: ${m.name || ""} (${m.centre || ""})`;
+        wrapper.appendChild(title);
+
+        const periodRow = document.createElement("div");
+        periodRow.className = "period-switch";
+        ["daily", "weekly", "monthly", "yearly"].forEach((period, idx) => {
+          const chip = document.createElement("button");
+          chip.className = "chip" + (idx === 0 ? " active" : "");
+          chip.textContent = period[0].toUpperCase() + period.slice(1);
+          chip.addEventListener("click", () => {
+            periodRow.querySelectorAll(".chip").forEach((c) =>
+              c.classList.remove("active")
+            );
+            chip.classList.add("active");
+            loadMemberProgress(period, m.id, wrapperProgress);
+          });
+          periodRow.appendChild(chip);
+        });
+        wrapper.appendChild(periodRow);
+
+        const wrapperProgress = document.createElement("div");
+        wrapper.appendChild(wrapperProgress);
+
+        loadMemberProgress("daily", m.id, wrapperProgress);
+      });
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.className = "btn-icon danger";
+      deleteBtn.textContent = "Del";
+      deleteBtn.addEventListener("click", async () => {
+        if (!confirm("Delete this student and their chart?")) return;
+        try {
+          await api(`/api/admin/delete-member/${m.id}`, {
+            method: "DELETE",
+          });
+          showToast("Student deleted.");
+          loadMembersList();
+        } catch (err) {
+          showToast(err.message || "Error deleting student.", { error: true });
+        }
+      });
+
+      actionsCell.appendChild(viewBtn);
+      actionsCell.appendChild(deleteBtn);
+      tbody.appendChild(tr);
+    });
+
+    container.innerHTML = "";
+    container.appendChild(table);
+  } catch (err) {
+    showToast(err.message || "Error loading members.", { error: true });
+  }
 }
 
-function openMemberChart(memberId, memberName){
-  modalMemberId = memberId;
-  $('chartMemberName').textContent = memberName;
-  $('chartModal').classList.add('show');
-  currentPeriod = 'daily';
-  document.querySelectorAll('#chartModal .period-btn').forEach((b,i)=>b.classList.toggle('active', i===0));
-  loadProgressCharts(memberId, 'modalCharts');
+// ====== PUBLIC MEMBERS LIST (EVERYONE) ======
+async function loadPublicMembers() {
+  try {
+    const data = await api("/api/members");
+    const members = data.members || [];
+    const list = document.getElementById("public-members-list");
+    if (members.length === 0) {
+      list.textContent = "No students registered yet.";
+      return;
+    }
+    list.innerHTML = "";
+    members.forEach((m) => {
+      const row = document.createElement("div");
+      row.className = "public-member-row";
+      const left = document.createElement("div");
+      left.innerHTML = `<strong>${m.name || "-"}</strong><br/><span class="small-text">${m.centre || "-"}</span>`;
+      const btn = document.createElement("button");
+      btn.className = "btn-icon";
+      btn.textContent = "View";
+      btn.addEventListener("click", () => {
+        publicSelectedMemberId = m.id;
+        document
+          .getElementById("public-selected-title")
+          .classList.remove("hidden");
+        document.getElementById(
+          "public-selected-title"
+        ).textContent = `Chart: ${m.name || ""} (${m.centre || ""})`;
+        // Reset chips
+        document
+          .querySelectorAll("#public-period-switch .chip")
+          .forEach((c, idx) => {
+            if (idx === 0) c.classList.add("active");
+            else c.classList.remove("active");
+          });
+        loadMemberProgress("daily", m.id, document.getElementById("public-progress-list"));
+      });
+      row.appendChild(left);
+      row.appendChild(btn);
+      list.appendChild(row);
+    });
+  } catch (err) {
+    showToast(err.message || "Error loading public list.", { error: true });
+  }
 }
-function closeChartModal(){ $('chartModal').classList.remove('show'); modalMemberId = null; }
-function showModalPeriod(period,e){ currentPeriod = period; document.querySelectorAll('#chartModal .period-btn').forEach(b=>b.classList.remove('active')); if (e && e.target) e.target.classList.add('active'); loadProgressCharts(modalMemberId, 'modalCharts'); }
 
-// ---------------- Helpers & UI utilities ----------------
-function showError(id,msg){ const el = $(id); if (!el) return alert(msg); el.textContent = msg; setTimeout(()=>el.textContent='',4000); }
-function showSuccess(id,msg){ const el = $(id); if (!el) return; el.textContent = msg; setTimeout(()=>el.textContent='',3000); }
-
-// ---------------- Admin tab switching ----------------
-async function showAdminTab(e, tab){
-  document.querySelectorAll('#adminDashboard .tab-btn').forEach(b => b.classList.remove('active'));
-  if (e && e.target) e.target.classList.add('active');
-  document.querySelectorAll('#adminDashboard .tab-content').forEach(c => c.classList.remove('active'));
-  $(`${tab}Tab`).classList.add('active');
-  if (tab === 'members') await loadAllMembers();
-  if (tab === 'points') await loadPoints();
+function setupPublicPeriodSwitch() {
+  document
+    .querySelectorAll("#public-period-switch .chip")
+    .forEach((chip) => {
+      chip.addEventListener("click", () => {
+        if (!publicSelectedMemberId) return;
+        const period = chip.getAttribute("data-public-period");
+        document
+          .querySelectorAll("#public-period-switch .chip")
+          .forEach((c) => c.classList.remove("active"));
+        chip.classList.add("active");
+        loadMemberProgress(
+          period,
+          publicSelectedMemberId,
+          document.getElementById("public-progress-list")
+        );
+      });
+    });
 }
 
-// ---------------- Member tab switching ----------------
-async function showMemberTab(e, tab){
-  document.querySelectorAll('#memberDashboard .tab-btn').forEach(b => b.classList.remove('active'));
-  if (e && e.target) e.target.classList.add('active');
-  document.querySelectorAll('#memberDashboard .tab-content').forEach(c => c.classList.remove('active'));
-  $(`${tab}Tab`).classList.add('active');
-  if (tab === 'daily') await loadDailyChecklist();
-  if (tab === 'progress') { currentPeriod = 'daily'; document.querySelectorAll('#progressTab .period-btn').forEach((b,i)=>b.classList.toggle('active', i===0)); await loadMyProgress(); }
-  if (tab === 'others') await loadAllMembers();
+// ====== PROGRESS RENDERING ======
+async function loadMemberProgress(period, memberId, container) {
+  if (!memberId) return;
+  try {
+    await loadPointsIfNeeded();
+    const data = await api(
+      `/api/members/${memberId}/progress/${period || "daily"}`
+    );
+    renderProgressList(data.progress || [], container);
+  } catch (err) {
+    container.innerHTML = `<p class="small-text">Error loading progress.</p>`;
+  }
 }
 
-// ---------------- Debug helpers ----------------
-window.debugPoints = async ()=> { console.log(await (await fetch(`${API_URL}/api/points`)).json()); };
-window.debugSchema = async ()=> { console.log(await (await fetch(`${API_URL}/api/debug/schema/daily_records`)).json()); };
+function renderProgressList(progress, container) {
+  container.innerHTML = "";
+  if (!progress || progress.length === 0) {
+    container.innerHTML = `<p class="small-text">No data yet.</p>`;
+    return;
+  }
+  progress.forEach((p) => {
+    const item = document.createElement("div");
+    item.className = "progress-item";
 
+    const header = document.createElement("div");
+    header.className = "progress-header";
+    header.innerHTML = `<span>${p.text}</span><span>${Math.round(
+      p.percentage || 0
+    )}%</span>`;
+
+    const bar = document.createElement("div");
+    bar.className = "progress-bar";
+    const fill = document.createElement("div");
+    fill.className = "progress-bar-fill";
+    fill.style.width = `${Math.max(0, Math.min(100, p.percentage || 0))}%`;
+    bar.appendChild(fill);
+
+    item.appendChild(header);
+    item.appendChild(bar);
+    container.appendChild(item);
+  });
+}
+
+// ====== STUDENT DASHBOARD AFTER LOGIN ======
+function setupStudentDashboardAfterLogin() {
+  const welcome = document.getElementById("student-welcome");
+  welcome.textContent = `Om Shanti, ${
+    currentMember.name || "Student"
+  } | Centre: ${currentMember.centre || "-"}`;
+
+  setTodayToDateInput("daily-date");
+  renderStudentPointsSliders();
+  loadStudentDay();
+  loadStudentAverages("daily");
+}
+
+function renderStudentPointsSliders() {
+  const container = document.getElementById("student-points-input");
+  container.innerHTML = "";
+  if (!points || points.length === 0) {
+    container.textContent = "No points available.";
+    return;
+  }
+
+  points.forEach((p) => {
+    const row = document.createElement("div");
+    row.className = "point-input-row";
+
+    const label = document.createElement("div");
+    label.className = "point-label";
+    label.textContent = p.text;
+
+    const sliderRow = document.createElement("div");
+    sliderRow.className = "slider-row";
+
+    const slider = document.createElement("input");
+    slider.type = "range";
+    slider.min = "0";
+    slider.max = "100";
+    slider.value = "0";
+    slider.dataset.pointId = p.id;
+
+    const valueSpan = document.createElement("span");
+    valueSpan.className = "slider-value";
+    valueSpan.textContent = "0%";
+
+    slider.addEventListener("input", () => {
+      valueSpan.textContent = `${slider.value}%`;
+    });
+
+    sliderRow.appendChild(slider);
+    sliderRow.appendChild(valueSpan);
+    row.appendChild(label);
+    row.appendChild(sliderRow);
+    container.appendChild(row);
+  });
+}
+
+async function loadStudentDay() {
+  const date = document.getElementById("daily-date").value;
+  if (!currentMember || !date) return;
+  await loadPointsIfNeeded();
+  try {
+    const data = await api(
+      `/api/members/${currentMember.id}/daily/${date}`
+    );
+    // data is map {pointId: effort}
+    document
+      .querySelectorAll("#student-points-input input[type='range']")
+      .forEach((slider) => {
+        const pid = slider.dataset.pointId;
+        const effort = data[pid] || 0;
+        slider.value = effort;
+        const valueSpan = slider.parentElement.querySelector(".slider-value");
+        if (valueSpan) valueSpan.textContent = `${effort}%`;
+      });
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function saveStudentDay() {
+  const date = document.getElementById("daily-date").value;
+  if (!currentMember || !date) return;
+  const sliders = Array.from(
+    document.querySelectorAll("#student-points-input input[type='range']")
+  );
+  try {
+    await Promise.all(
+      sliders.map((slider) => {
+        const pointId = Number(slider.dataset.pointId);
+        const completed = Number(slider.value || 0);
+        return api(`/api/members/${currentMember.id}/daily`, {
+          method: "POST",
+          body: { date, pointId, completed },
+        });
+      })
+    );
+    showToast("Today's marks saved.");
+    // Refresh daily average after save
+    loadStudentAverages("daily");
+  } catch (err) {
+    showToast(err.message || "Error saving marks.", { error: true });
+  }
+}
+
+async function loadStudentAverages(period) {
+  if (!currentMember) return;
+  const container = document.getElementById("student-progress-list");
+  await loadMemberProgress(period, currentMember.id, container);
+}
+
+function setupStudentDashboardEvents() {
+  document.getElementById("daily-load-btn").addEventListener("click", () => {
+    loadStudentDay();
+  });
+  document
+    .getElementById("save-daily-btn")
+    .addEventListener("click", () => saveStudentDay());
+
+  document
+    .querySelectorAll("#view-student-dashboard .period-switch .chip")
+    .forEach((chip) => {
+      chip.addEventListener("click", () => {
+        const period = chip.getAttribute("data-period");
+        document
+          .querySelectorAll("#view-student-dashboard .period-switch .chip")
+          .forEach((c) => c.classList.remove("active"));
+        chip.classList.add("active");
+        loadStudentAverages(period);
+      });
+    });
+}
+
+// ====== ADMIN TABS ======
+function setupAdminTabs() {
+  document.querySelectorAll("[data-admin-tab]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const tab = btn.getAttribute("data-admin-tab");
+      document
+        .querySelectorAll("[data-admin-tab]")
+        .forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      document.querySelectorAll(".tab-panel").forEach((p) => {
+        p.classList.remove("active");
+      });
+      document.getElementById(`admin-tab-${tab}`).classList.add("active");
+
+      if (tab === "members") {
+        loadMembersList();
+      } else if (tab === "public") {
+        // reuse public data under admin
+        loadPublicMembers();
+      }
+    });
+  });
+}
+
+// ====== ADMIN INITIAL DATA ======
+async function refreshAdminData() {
+  await loadPointsIfNeeded();
+  renderAdminPoints();
+  // default tab: points
+  loadMembersList(); // preload for later
+}
+
+// ====== INIT APP ======
+function initFromLocalStorage() {
+  const savedAdmin = localStorage.getItem("admin");
+  const savedMember = localStorage.getItem("member");
+  if (savedAdmin) {
+    try {
+      currentAdmin = JSON.parse(savedAdmin);
+      document.getElementById("admin-username-display").textContent =
+        currentAdmin.username;
+      refreshAdminData();
+      showView("admin-dashboard");
+      return;
+    } catch (_) {}
+  }
+  if (savedMember) {
+    try {
+      currentMember = JSON.parse(savedMember);
+      loadPointsIfNeeded().then(() => {
+        setupStudentDashboardAfterLogin();
+        showView("student-dashboard");
+      });
+      return;
+    } catch (_) {}
+  }
+  showView("landing");
+}
+
+// ====== BOOTSTRAP ======
+document.addEventListener("DOMContentLoaded", () => {
+  setupNavigation();
+  setupPasswordToggles();
+  setupAdminLogin();
+  setupStudentAuth();
+  setupAdminPointsUI();
+  setupStudentDashboardEvents();
+  setupAdminTabs();
+  setupPublicPeriodSwitch();
+  setTodayToDateInput("daily-date");
+  initFromLocalStorage();
+});
